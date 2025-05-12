@@ -5,30 +5,30 @@ game "The Cursed Vault" {
   room "dungeon" {
     description = "Temniță cu ziduri ude. O ușă de fier în nord. Pe podea zace un scut spart."
     
-    objects {
+    objects = [
       shield: {
         takeable = true
         examine = "Scutul pare a putea absorbi o lovitură"
-      }
+      },
       loose_brick: {
-        examine = "Un cărămidă se mișcă! Dacă o apeși..."
+        examine = "Caramida se mișcă"
         hidden_item: "silver_key"
       }
-    }
+    ]
     
-    connections {
+    connections = [
       north: "hallway"
-    }
+    ]
   }
 
   room "hallway" {
     description = "Coridor lung cu două statui. Aerul miroase a sulf."
     
-    connections {
+    connections = [
       east: "well_room" if has_item("rusty_key"),
       west: "armory",
       south: "dungeon"
-    }
+    ]
     
     trap {
       damage = 1 unless has_item("shield") || flag("trap_disabled")
@@ -40,13 +40,13 @@ game "The Cursed Vault" {
   room "armory" {
     description = "Sala cu arme. Pe perete: un cufăr încuiat."
     
-    objects {
+    objects = [
       chest: {
         requires = "silver_key"
         contents = ["rusty_key", "sword"]
         examine = "Un cufăr cu simbolul unei coroane"
       }
-    }
+    ]
   }
 
   room "well_room" {
@@ -59,9 +59,9 @@ game "The Cursed Vault" {
       defeat_reward = "gold_key"
     }
     
-    connections {
+    connections = [
       north: "exit" if has_item("gold_key") && has_item("silver_key")
-    }
+    ]
   }
 
   room "exit" {
