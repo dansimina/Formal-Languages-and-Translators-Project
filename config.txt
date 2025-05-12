@@ -1,0 +1,71 @@
+game "The Cursed Vault" {
+  start_room = "dungeon"
+  health = 3
+  
+  room "dungeon" {
+    description = "Temniță cu ziduri ude. O ușă de fier în nord. Pe podea zace un scut spart."
+    
+    objects {
+      shield: {
+        takeable = true
+        examine = "Scutul pare a putea absorbi o lovitură"
+      }
+      loose_brick: {
+        examine = "Un cărămidă se mișcă! Dacă o apeși..."
+        hidden_item: "silver_key"
+      }
+    }
+    
+    connections {
+      north: "hallway"
+    }
+  }
+
+  room "hallway" {
+    description = "Coridor lung cu două statui. Aerul miroase a sulf."
+    
+    connections {
+      east: "well_room" if has_item("rusty_key"),
+      west: "armory",
+      south: "dungeon"
+    }
+    
+    trap {
+      damage = 1 unless has_item("shield") || flag("trap_disabled")
+      message = "O săgeată otrăvită te lovește din întuneric!"
+      on_trigger = set_flag("trap_disabled")
+    }
+  }
+
+  room "armory" {
+    description = "Sala cu arme. Pe perete: un cufăr încuiat."
+    
+    objects {
+      chest: {
+        requires = "silver_key"
+        contents = ["rusty_key", "sword"]
+        examine = "Un cufăr cu simbolul unei coroane"
+      }
+    }
+  }
+
+  room "well_room" {
+    description = "O fântână cu apă neagră. Un zombi păzește ușa de nord!"
+    
+    enemy {
+      name = "zombie"
+      damage = 2
+      weakness = "sword"
+      defeat_reward = "gold_key"
+    }
+    
+    connections {
+      north: "exit" if has_item("gold_key") && has_item("silver_key")
+    }
+  }
+
+  room "exit" {
+    description = "AI DESCHIS UȘA BLOCATĂ CU CELE DOUĂ CHEI! LIBER!"
+    win_condition = true
+  }
+}
