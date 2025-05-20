@@ -56,16 +56,28 @@ extern int yydebug;
     YYUNDEF = 257,                 /* "invalid token"  */
     STRING = 258,                  /* STRING  */
     NUMBER = 259,                  /* NUMBER  */
-    GAME = 260,                    /* GAME  */
-    START_ROOM = 261,              /* START_ROOM  */
-    HEALTH = 262,                  /* HEALTH  */
-    ROOM = 263,                    /* ROOM  */
-    EQUALS = 264,                  /* EQUALS  */
-    OPEN_BRACE = 265,              /* OPEN_BRACE  */
-    CLOSED_BRACE = 266,            /* CLOSED_BRACE  */
-    LIST_START = 267,              /* LIST_START  */
-    LIST_END = 268,                /* LIST_END  */
-    COMMA = 269                    /* COMMA  */
+    TRUE = 260,                    /* TRUE  */
+    FALSE = 261,                   /* FALSE  */
+    IDENTIFIER = 262,              /* IDENTIFIER  */
+    GAME = 263,                    /* GAME  */
+    START_ROOM = 264,              /* START_ROOM  */
+    HEALTH = 265,                  /* HEALTH  */
+    ROOM = 266,                    /* ROOM  */
+    DESCRIPTION = 267,             /* DESCRIPTION  */
+    OBJECTS = 268,                 /* OBJECTS  */
+    CONNECTIONS = 269,             /* CONNECTIONS  */
+    TAKEABLE = 270,                /* TAKEABLE  */
+    REQUIRES = 271,                /* REQUIRES  */
+    CONTENTS = 272,                /* CONTENTS  */
+    HIDDEN_ITEM = 273,             /* HIDDEN_ITEM  */
+    EXAMINE = 274,                 /* EXAMINE  */
+    EQUALS = 275,                  /* EQUALS  */
+    OPEN_BRACE = 276,              /* OPEN_BRACE  */
+    CLOSED_BRACE = 277,            /* CLOSED_BRACE  */
+    LIST_START = 278,              /* LIST_START  */
+    LIST_END = 279,                /* LIST_END  */
+    COMMA = 280,                   /* COMMA  */
+    COLON = 281                    /* COLON  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -76,16 +88,28 @@ extern int yydebug;
 #define YYUNDEF 257
 #define STRING 258
 #define NUMBER 259
-#define GAME 260
-#define START_ROOM 261
-#define HEALTH 262
-#define ROOM 263
-#define EQUALS 264
-#define OPEN_BRACE 265
-#define CLOSED_BRACE 266
-#define LIST_START 267
-#define LIST_END 268
-#define COMMA 269
+#define TRUE 260
+#define FALSE 261
+#define IDENTIFIER 262
+#define GAME 263
+#define START_ROOM 264
+#define HEALTH 265
+#define ROOM 266
+#define DESCRIPTION 267
+#define OBJECTS 268
+#define CONNECTIONS 269
+#define TAKEABLE 270
+#define REQUIRES 271
+#define CONTENTS 272
+#define HIDDEN_ITEM 273
+#define EXAMINE 274
+#define EQUALS 275
+#define OPEN_BRACE 276
+#define CLOSED_BRACE 277
+#define LIST_START 278
+#define LIST_END 279
+#define COMMA 280
+#define COLON 281
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -96,7 +120,7 @@ union YYSTYPE
     char* str;
     int number;
 
-#line 100 "y.tab.h"
+#line 124 "y.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

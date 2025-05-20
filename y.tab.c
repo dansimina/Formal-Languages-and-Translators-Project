@@ -124,16 +124,28 @@ extern int yydebug;
     YYUNDEF = 257,                 /* "invalid token"  */
     STRING = 258,                  /* STRING  */
     NUMBER = 259,                  /* NUMBER  */
-    GAME = 260,                    /* GAME  */
-    START_ROOM = 261,              /* START_ROOM  */
-    HEALTH = 262,                  /* HEALTH  */
-    ROOM = 263,                    /* ROOM  */
-    EQUALS = 264,                  /* EQUALS  */
-    OPEN_BRACE = 265,              /* OPEN_BRACE  */
-    CLOSED_BRACE = 266,            /* CLOSED_BRACE  */
-    LIST_START = 267,              /* LIST_START  */
-    LIST_END = 268,                /* LIST_END  */
-    COMMA = 269                    /* COMMA  */
+    TRUE = 260,                    /* TRUE  */
+    FALSE = 261,                   /* FALSE  */
+    IDENTIFIER = 262,              /* IDENTIFIER  */
+    GAME = 263,                    /* GAME  */
+    START_ROOM = 264,              /* START_ROOM  */
+    HEALTH = 265,                  /* HEALTH  */
+    ROOM = 266,                    /* ROOM  */
+    DESCRIPTION = 267,             /* DESCRIPTION  */
+    OBJECTS = 268,                 /* OBJECTS  */
+    CONNECTIONS = 269,             /* CONNECTIONS  */
+    TAKEABLE = 270,                /* TAKEABLE  */
+    REQUIRES = 271,                /* REQUIRES  */
+    CONTENTS = 272,                /* CONTENTS  */
+    HIDDEN_ITEM = 273,             /* HIDDEN_ITEM  */
+    EXAMINE = 274,                 /* EXAMINE  */
+    EQUALS = 275,                  /* EQUALS  */
+    OPEN_BRACE = 276,              /* OPEN_BRACE  */
+    CLOSED_BRACE = 277,            /* CLOSED_BRACE  */
+    LIST_START = 278,              /* LIST_START  */
+    LIST_END = 279,                /* LIST_END  */
+    COMMA = 280,                   /* COMMA  */
+    COLON = 281                    /* COLON  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -144,16 +156,28 @@ extern int yydebug;
 #define YYUNDEF 257
 #define STRING 258
 #define NUMBER 259
-#define GAME 260
-#define START_ROOM 261
-#define HEALTH 262
-#define ROOM 263
-#define EQUALS 264
-#define OPEN_BRACE 265
-#define CLOSED_BRACE 266
-#define LIST_START 267
-#define LIST_END 268
-#define COMMA 269
+#define TRUE 260
+#define FALSE 261
+#define IDENTIFIER 262
+#define GAME 263
+#define START_ROOM 264
+#define HEALTH 265
+#define ROOM 266
+#define DESCRIPTION 267
+#define OBJECTS 268
+#define CONNECTIONS 269
+#define TAKEABLE 270
+#define REQUIRES 271
+#define CONTENTS 272
+#define HIDDEN_ITEM 273
+#define EXAMINE 274
+#define EQUALS 275
+#define OPEN_BRACE 276
+#define CLOSED_BRACE 277
+#define LIST_START 278
+#define LIST_END 279
+#define COMMA 280
+#define COLON 281
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -164,7 +188,7 @@ union YYSTYPE
     char* str;
     int number;
 
-#line 168 "y.tab.c"
+#line 192 "y.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -189,23 +213,47 @@ enum yysymbol_kind_t
   YYSYMBOL_YYUNDEF = 2,                    /* "invalid token"  */
   YYSYMBOL_STRING = 3,                     /* STRING  */
   YYSYMBOL_NUMBER = 4,                     /* NUMBER  */
-  YYSYMBOL_GAME = 5,                       /* GAME  */
-  YYSYMBOL_START_ROOM = 6,                 /* START_ROOM  */
-  YYSYMBOL_HEALTH = 7,                     /* HEALTH  */
-  YYSYMBOL_ROOM = 8,                       /* ROOM  */
-  YYSYMBOL_EQUALS = 9,                     /* EQUALS  */
-  YYSYMBOL_OPEN_BRACE = 10,                /* OPEN_BRACE  */
-  YYSYMBOL_CLOSED_BRACE = 11,              /* CLOSED_BRACE  */
-  YYSYMBOL_LIST_START = 12,                /* LIST_START  */
-  YYSYMBOL_LIST_END = 13,                  /* LIST_END  */
-  YYSYMBOL_COMMA = 14,                     /* COMMA  */
-  YYSYMBOL_YYACCEPT = 15,                  /* $accept  */
-  YYSYMBOL_program = 16,                   /* program  */
-  YYSYMBOL_configuration = 17,             /* configuration  */
-  YYSYMBOL_start_room = 18,                /* start_room  */
-  YYSYMBOL_health = 19,                    /* health  */
-  YYSYMBOL_rooms = 20,                     /* rooms  */
-  YYSYMBOL_room_list = 21                  /* room_list  */
+  YYSYMBOL_TRUE = 5,                       /* TRUE  */
+  YYSYMBOL_FALSE = 6,                      /* FALSE  */
+  YYSYMBOL_IDENTIFIER = 7,                 /* IDENTIFIER  */
+  YYSYMBOL_GAME = 8,                       /* GAME  */
+  YYSYMBOL_START_ROOM = 9,                 /* START_ROOM  */
+  YYSYMBOL_HEALTH = 10,                    /* HEALTH  */
+  YYSYMBOL_ROOM = 11,                      /* ROOM  */
+  YYSYMBOL_DESCRIPTION = 12,               /* DESCRIPTION  */
+  YYSYMBOL_OBJECTS = 13,                   /* OBJECTS  */
+  YYSYMBOL_CONNECTIONS = 14,               /* CONNECTIONS  */
+  YYSYMBOL_TAKEABLE = 15,                  /* TAKEABLE  */
+  YYSYMBOL_REQUIRES = 16,                  /* REQUIRES  */
+  YYSYMBOL_CONTENTS = 17,                  /* CONTENTS  */
+  YYSYMBOL_HIDDEN_ITEM = 18,               /* HIDDEN_ITEM  */
+  YYSYMBOL_EXAMINE = 19,                   /* EXAMINE  */
+  YYSYMBOL_EQUALS = 20,                    /* EQUALS  */
+  YYSYMBOL_OPEN_BRACE = 21,                /* OPEN_BRACE  */
+  YYSYMBOL_CLOSED_BRACE = 22,              /* CLOSED_BRACE  */
+  YYSYMBOL_LIST_START = 23,                /* LIST_START  */
+  YYSYMBOL_LIST_END = 24,                  /* LIST_END  */
+  YYSYMBOL_COMMA = 25,                     /* COMMA  */
+  YYSYMBOL_COLON = 26,                     /* COLON  */
+  YYSYMBOL_YYACCEPT = 27,                  /* $accept  */
+  YYSYMBOL_program = 28,                   /* program  */
+  YYSYMBOL_configuration = 29,             /* configuration  */
+  YYSYMBOL_start_room = 30,                /* start_room  */
+  YYSYMBOL_health = 31,                    /* health  */
+  YYSYMBOL_list_of_rooms = 32,             /* list_of_rooms  */
+  YYSYMBOL_room_config = 33,               /* room_config  */
+  YYSYMBOL_room_description = 34,          /* room_description  */
+  YYSYMBOL_room_objects = 35,              /* room_objects  */
+  YYSYMBOL_object_list = 36,               /* object_list  */
+  YYSYMBOL_object_config = 37,             /* object_config  */
+  YYSYMBOL_object_description_list = 38,   /* object_description_list  */
+  YYSYMBOL_object_description = 39,        /* object_description  */
+  YYSYMBOL_list_of_items = 40,             /* list_of_items  */
+  YYSYMBOL_item_list = 41,                 /* item_list  */
+  YYSYMBOL_item = 42,                      /* item  */
+  YYSYMBOL_room_connections = 43,          /* room_connections  */
+  YYSYMBOL_connection_list = 44,           /* connection_list  */
+  YYSYMBOL_connection = 45                 /* connection  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -533,19 +581,19 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  4
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   19
+#define YYLAST   60
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  15
+#define YYNTOKENS  27
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  7
+#define YYNNTS  19
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  7
+#define YYNRULES  29
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  22
+#define YYNSTATES  78
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   269
+#define YYMAXUTOK   281
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -585,14 +633,18 @@ static const yytype_int8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6,     7,     8,     9,    10,    11,    12,    13,    14
+       5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
+      15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
+      25,    26
 };
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int8 yyrline[] =
 {
-       0,    26,    26,    29,    32,    35,    38,    39
+       0,    31,    31,    34,    37,    40,    43,    44,    47,    51,
+      54,    57,    58,    61,    64,    65,    68,    69,    70,    71,
+      72,    73,    76,    79,    80,    82,    85,    88,    89,    92
 };
 #endif
 
@@ -609,9 +661,15 @@ static const char *yysymbol_name (yysymbol_kind_t yysymbol) YY_ATTRIBUTE_UNUSED;
 static const char *const yytname[] =
 {
   "\"end of file\"", "error", "\"invalid token\"", "STRING", "NUMBER",
-  "GAME", "START_ROOM", "HEALTH", "ROOM", "EQUALS", "OPEN_BRACE",
-  "CLOSED_BRACE", "LIST_START", "LIST_END", "COMMA", "$accept", "program",
-  "configuration", "start_room", "health", "rooms", "room_list", YY_NULLPTR
+  "TRUE", "FALSE", "IDENTIFIER", "GAME", "START_ROOM", "HEALTH", "ROOM",
+  "DESCRIPTION", "OBJECTS", "CONNECTIONS", "TAKEABLE", "REQUIRES",
+  "CONTENTS", "HIDDEN_ITEM", "EXAMINE", "EQUALS", "OPEN_BRACE",
+  "CLOSED_BRACE", "LIST_START", "LIST_END", "COMMA", "COLON", "$accept",
+  "program", "configuration", "start_room", "health", "list_of_rooms",
+  "room_config", "room_description", "room_objects", "object_list",
+  "object_config", "object_description_list", "object_description",
+  "list_of_items", "item_list", "item", "room_connections",
+  "connection_list", "connection", YY_NULLPTR
 };
 
 static const char *
@@ -621,7 +679,7 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-8)
+#define YYPACT_NINF (-37)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -635,9 +693,14 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-      -5,    -2,     2,    -7,    -8,    -1,    -3,    -4,     1,     6,
-      -8,     3,     5,    -8,     0,     7,    -8,    -8,     4,    -8,
-       8,    -8
+       6,    12,    16,    -3,   -37,    10,     0,    -1,    13,    19,
+     -37,     4,    14,   -37,    22,    24,    14,   -37,   -37,     7,
+     -37,    17,    11,    20,    27,    15,    18,   -37,    21,    23,
+      25,    29,    26,   -37,     8,   -17,   -37,    30,    31,   -37,
+      29,    28,    -7,   -37,   -14,   -37,    35,   -37,   -37,    33,
+      36,    37,    38,    39,   -16,   -37,   -37,     5,    42,    32,
+      43,    45,   -37,   -14,   -37,   -37,   -37,    47,   -37,   -37,
+     -37,   -37,   -37,   -12,   -37,   -37,    47,   -37
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -646,20 +709,27 @@ static const yytype_int8 yypact[] =
 static const yytype_int8 yydefact[] =
 {
        0,     0,     0,     0,     1,     0,     0,     0,     0,     0,
-       2,     0,     0,     4,     0,     0,     3,     5,     0,     7,
-       0,     6
+       2,     0,     0,     4,     0,     0,     3,     7,     5,     0,
+       6,     0,     0,     0,     0,     0,     0,     9,     0,     0,
+       0,     0,     0,     8,     0,     0,    12,     0,     0,    10,
+       0,     0,     0,    28,     0,    11,     0,    26,    27,     0,
+       0,     0,     0,     0,     0,    15,    29,     0,     0,     0,
+       0,     0,    13,     0,    16,    17,    18,     0,    19,    20,
+      21,    14,    25,     0,    24,    22,     0,    23
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-      -8,    -8,    -8,    -8,    -8,    -8,    -8
+     -37,   -37,   -37,   -37,   -37,   -37,    44,   -37,   -37,   -37,
+       1,   -37,   -24,   -37,   -37,   -36,   -37,   -37,     9
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,     2,     7,     8,    12,    16,    20
+       0,     2,     7,     8,    12,    16,    17,    23,    26,    35,
+      36,    54,    55,    68,    73,    74,    30,    42,    43
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -667,35 +737,54 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-       1,     3,     4,     5,    17,     6,     9,    10,    11,    13,
-       0,     0,    14,    15,    19,     0,    18,     0,     0,    21
+      41,    49,    50,    51,    52,    53,    62,    39,    40,    63,
+      64,    65,    75,    76,     1,     3,     4,    47,     5,     6,
+       9,    10,    13,    11,    14,    15,    18,    19,    21,    22,
+      27,    24,    29,    25,    38,    28,    34,    41,    56,    71,
+      77,    45,     0,    32,    31,    66,    69,    33,    70,    37,
+      72,    48,    44,    57,    46,    67,    58,    59,    60,    61,
+      20
 };
 
 static const yytype_int8 yycheck[] =
 {
-       5,     3,     0,    10,     4,     6,     9,    11,     7,     3,
-      -1,    -1,     9,     8,    10,    -1,     9,    -1,    -1,    11
+       7,    15,    16,    17,    18,    19,    22,    24,    25,    25,
+       5,     6,    24,    25,     8,     3,     0,    24,    21,     9,
+      20,    22,     3,    10,    20,    11,     4,     3,    21,    12,
+       3,    20,    14,    13,    26,    20,     7,     7,     3,    63,
+      76,    40,    -1,    20,    23,     3,     3,    22,     3,    23,
+       3,    42,    21,    20,    26,    23,    20,    20,    20,    20,
+      16
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
    state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,     5,    16,     3,     0,    10,     6,    17,    18,     9,
-      11,     7,    19,     3,     9,     8,    20,     4,     9,    10,
-      21,    11
+       0,     8,    28,     3,     0,    21,     9,    29,    30,    20,
+      22,    10,    31,     3,    20,    11,    32,    33,     4,     3,
+      33,    21,    12,    34,    20,    13,    35,     3,    20,    14,
+      43,    23,    20,    22,     7,    36,    37,    23,    26,    24,
+      25,     7,    44,    45,    21,    37,    26,    24,    45,    15,
+      16,    17,    18,    19,    38,    39,     3,    20,    20,    20,
+      20,    20,    22,    25,     5,     6,     3,    23,    40,     3,
+       3,    39,     3,    41,    42,    24,    25,    42
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    15,    16,    17,    18,    19,    20,    21
+       0,    27,    28,    29,    30,    31,    32,    32,    33,    34,
+      35,    36,    36,    37,    38,    38,    39,    39,    39,    39,
+      39,    39,    40,    41,    41,    42,    43,    44,    44,    45
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr2[] =
 {
-       0,     2,     5,     3,     3,     3,     5,     0
+       0,     2,     5,     3,     3,     3,     2,     1,     7,     3,
+       5,     3,     1,     5,     3,     1,     3,     3,     3,     3,
+       3,     3,     3,     3,     1,     1,     5,     2,     1,     3
 };
 
 
@@ -1159,25 +1248,85 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* program: GAME STRING OPEN_BRACE configuration CLOSED_BRACE  */
-#line 26 "yacc_source.y"
+#line 31 "yacc_source.y"
                                                             { printf("Game: %s\n", (yyvsp[-3].str)); }
-#line 1165 "y.tab.c"
+#line 1254 "y.tab.c"
     break;
 
   case 4: /* start_room: START_ROOM EQUALS STRING  */
-#line 32 "yacc_source.y"
+#line 37 "yacc_source.y"
                                      { printf("Start Room: %s\n", (yyvsp[0].str)); }
-#line 1171 "y.tab.c"
+#line 1260 "y.tab.c"
     break;
 
   case 5: /* health: HEALTH EQUALS NUMBER  */
-#line 35 "yacc_source.y"
+#line 40 "yacc_source.y"
                              { printf("Health: %d\n", (yyvsp[0].number)); }
-#line 1177 "y.tab.c"
+#line 1266 "y.tab.c"
+    break;
+
+  case 8: /* room_config: ROOM STRING OPEN_BRACE room_description room_objects room_connections CLOSED_BRACE  */
+#line 48 "yacc_source.y"
+            { printf("Room: %s\n", (yyvsp[-5].str)); }
+#line 1272 "y.tab.c"
+    break;
+
+  case 9: /* room_description: DESCRIPTION EQUALS STRING  */
+#line 51 "yacc_source.y"
+                                            { printf("Description: %s\n", (yyvsp[0].str)); }
+#line 1278 "y.tab.c"
+    break;
+
+  case 13: /* object_config: IDENTIFIER COLON OPEN_BRACE object_description_list CLOSED_BRACE  */
+#line 62 "yacc_source.y"
+            { printf("Object: %s\n", (yyvsp[-4].str)); }
+#line 1284 "y.tab.c"
+    break;
+
+  case 16: /* object_description: TAKEABLE EQUALS TRUE  */
+#line 68 "yacc_source.y"
+                                         { printf("Takeable: TRUE\n"); }
+#line 1290 "y.tab.c"
+    break;
+
+  case 17: /* object_description: TAKEABLE EQUALS FALSE  */
+#line 69 "yacc_source.y"
+                                   { printf("Takeable: FALSE\n"); }
+#line 1296 "y.tab.c"
+    break;
+
+  case 18: /* object_description: REQUIRES EQUALS STRING  */
+#line 70 "yacc_source.y"
+                                    { printf("Requires: %s\n", (yyvsp[0].str)); }
+#line 1302 "y.tab.c"
+    break;
+
+  case 20: /* object_description: HIDDEN_ITEM EQUALS STRING  */
+#line 72 "yacc_source.y"
+                                       { printf("Hidden Item: %s\n", (yyvsp[0].str)); }
+#line 1308 "y.tab.c"
+    break;
+
+  case 21: /* object_description: EXAMINE EQUALS STRING  */
+#line 73 "yacc_source.y"
+                                   { printf("Examine: %s\n", (yyvsp[0].str)); }
+#line 1314 "y.tab.c"
+    break;
+
+  case 25: /* item: STRING  */
+#line 82 "yacc_source.y"
+                { printf("Item: %s\n", (yyvsp[0].str)); }
+#line 1320 "y.tab.c"
+    break;
+
+  case 29: /* connection: IDENTIFIER COLON STRING  */
+#line 93 "yacc_source.y"
+            { printf("Connection: %s -> %s\n", (yyvsp[-2].str), (yyvsp[0].str)); }
+#line 1326 "y.tab.c"
     break;
 
 
-#line 1181 "y.tab.c"
+#line 1330 "y.tab.c"
 
       default: break;
     }
@@ -1370,7 +1519,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 43 "yacc_source.y"
+#line 95 "yacc_source.y"
 
 
 int main() {
