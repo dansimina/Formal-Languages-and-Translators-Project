@@ -2,24 +2,11 @@ game "The Cursed Vault" {
   start_room = "dungeon"
   health = 3
   
-  room "dungeon" {
-    description = "Temniță cu ziduri ude. O ușă de fier în nord. Pe podea zace un scut spart."
+  objects {
     
-    objects = [
-      shield: {
-        takeable = true,
-        requires = "silver_key",
-        contents = ["rusty_key", "sword"],
-        examine = "Scutul pare a putea absorbi o lovitură"
-      },
-      loose_brick: {
-        examine = "Caramida se mișcă",
-        hidden_item = "silver_key"
-      }
-    ]
     
-    connections = [
-      north: "hallway"
-    ]
+    chest: {
+      requires = silver_key
+    }
   }
 }

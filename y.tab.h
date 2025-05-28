@@ -55,10 +55,10 @@ extern int yydebug;
     YYerror = 256,                 /* error  */
     YYUNDEF = 257,                 /* "invalid token"  */
     STRING = 258,                  /* STRING  */
-    NUMBER = 259,                  /* NUMBER  */
-    TRUE = 260,                    /* TRUE  */
-    FALSE = 261,                   /* FALSE  */
-    IDENTIFIER = 262,              /* IDENTIFIER  */
+    IDENTIFIER = 259,              /* IDENTIFIER  */
+    NUMBER = 260,                  /* NUMBER  */
+    TRUE = 261,                    /* TRUE  */
+    FALSE = 262,                   /* FALSE  */
     GAME = 263,                    /* GAME  */
     START_ROOM = 264,              /* START_ROOM  */
     HEALTH = 265,                  /* HEALTH  */
@@ -71,13 +71,25 @@ extern int yydebug;
     CONTENTS = 272,                /* CONTENTS  */
     HIDDEN_ITEM = 273,             /* HIDDEN_ITEM  */
     EXAMINE = 274,                 /* EXAMINE  */
-    EQUALS = 275,                  /* EQUALS  */
-    OPEN_BRACE = 276,              /* OPEN_BRACE  */
-    CLOSED_BRACE = 277,            /* CLOSED_BRACE  */
-    LIST_START = 278,              /* LIST_START  */
-    LIST_END = 279,                /* LIST_END  */
-    COMMA = 280,                   /* COMMA  */
-    COLON = 281                    /* COLON  */
+    CONSUME_KEY = 275,             /* CONSUME_KEY  */
+    TRAP = 276,                    /* TRAP  */
+    ENEMY = 277,                   /* ENEMY  */
+    DAMAGE = 278,                  /* DAMAGE  */
+    WEAKNESS = 279,                /* WEAKNESS  */
+    DEFEAT_REWARD = 280,           /* DEFEAT_REWARD  */
+    WIN_CONDITION = 281,           /* WIN_CONDITION  */
+    NAME = 282,                    /* NAME  */
+    MESSAGE = 283,                 /* MESSAGE  */
+    PROTECTION = 284,              /* PROTECTION  */
+    PROTECTION_MESSAGE = 285,      /* PROTECTION_MESSAGE  */
+    ENTRY_MESSAGE = 286,           /* ENTRY_MESSAGE  */
+    EQUALS = 287,                  /* EQUALS  */
+    OPEN_BRACE = 288,              /* OPEN_BRACE  */
+    CLOSED_BRACE = 289,            /* CLOSED_BRACE  */
+    LIST_START = 290,              /* LIST_START  */
+    LIST_END = 291,                /* LIST_END  */
+    COMMA = 292,                   /* COMMA  */
+    COLON = 293                    /* COLON  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -87,10 +99,10 @@ extern int yydebug;
 #define YYerror 256
 #define YYUNDEF 257
 #define STRING 258
-#define NUMBER 259
-#define TRUE 260
-#define FALSE 261
-#define IDENTIFIER 262
+#define IDENTIFIER 259
+#define NUMBER 260
+#define TRUE 261
+#define FALSE 262
 #define GAME 263
 #define START_ROOM 264
 #define HEALTH 265
@@ -103,24 +115,36 @@ extern int yydebug;
 #define CONTENTS 272
 #define HIDDEN_ITEM 273
 #define EXAMINE 274
-#define EQUALS 275
-#define OPEN_BRACE 276
-#define CLOSED_BRACE 277
-#define LIST_START 278
-#define LIST_END 279
-#define COMMA 280
-#define COLON 281
+#define CONSUME_KEY 275
+#define TRAP 276
+#define ENEMY 277
+#define DAMAGE 278
+#define WEAKNESS 279
+#define DEFEAT_REWARD 280
+#define WIN_CONDITION 281
+#define NAME 282
+#define MESSAGE 283
+#define PROTECTION 284
+#define PROTECTION_MESSAGE 285
+#define ENTRY_MESSAGE 286
+#define EQUALS 287
+#define OPEN_BRACE 288
+#define CLOSED_BRACE 289
+#define LIST_START 290
+#define LIST_END 291
+#define COMMA 292
+#define COLON 293
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 12 "yacc_source.y"
+#line 158 "yacc_source.y"
 
     char* str;
     int number;
 
-#line 124 "y.tab.h"
+#line 148 "y.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

@@ -72,13 +72,159 @@
     #include <stdio.h>
     #include <string.h>
     #include <stdbool.h>
+    #include <stdlib.h>
+
+    // Forward declarations
+    typedef struct Object Object;
+    typedef struct Room Room;
+
+    // Struct-uri cu referințe directe
+    typedef struct Object {
+        char* name;
+        bool takeable;
+        Object* requires;               // pointer direct la obiect
+        Object** contents;              // array de pointeri la obiecte
+        int content_count;
+        Object* hidden_item;            // pointer direct la obiect
+        char* examine_text;
+        bool consume_key;
+    } Object;
+
+    typedef struct {
+        char* direction;
+        Room* room;                     // pointer direct la cameră
+    } Connection;
+
+    typedef struct {
+        int damage;
+        char* message;
+        Object* protection;             // pointer direct la obiect
+        char* protection_message;
+    } Trap;
+
+    typedef struct {
+        char* name;
+        int damage;
+        Object* weakness;               // pointer direct la obiect
+        Object* defeat_reward;          // pointer direct la obiect
+    } Enemy;
+
+    typedef struct Room {
+        char* name;
+        char* description;
+        Connection* connections;
+        int connection_count;
+        Object** objects;               // array de pointeri la obiecte
+        int object_count;
+        Object** requires;              // array de pointeri la obiecte necesare
+        int requires_count;
+        char* entry_message;
+        bool has_trap;
+        Trap trap;
+        bool has_enemy;
+        Enemy enemy;
+        bool win_condition;
+    } Room;
+
+    typedef struct {
+        char* game_name;
+        Room* start_room;               // pointer direct la cameră
+        int health;
+        Object* objects;
+        int object_count;
+        Room* rooms;
+        int room_count;
+    } Game;
+
+    // Structuri temporare pentru parsing (cu nume ca string-uri)
+    typedef struct {
+        char* name;
+        bool takeable;
+        char* requires_name;
+        char** contents_names;
+        int content_count;
+        char* hidden_item_name;
+        char* examine_text;
+        bool consume_key;
+    } TempObject;
+
+    typedef struct {
+        char* direction;
+        char* room_name;
+    } TempConnection;
+
+    typedef struct {
+        int damage;
+        char* message;
+        char* protection_name;
+        char* protection_message;
+    } TempTrap;
+
+    typedef struct {
+        char* name;
+        int damage;
+        char* weakness_name;
+        char* defeat_reward_name;
+    } TempEnemy;
+
+    typedef struct {
+        char* name;
+        char* description;
+        TempConnection* connections;
+        int connection_count;
+        char** objects_names;
+        int object_count;
+        char** requires_names;
+        int requires_count;
+        char* entry_message;
+        bool has_trap;
+        TempTrap trap;
+        bool has_enemy;
+        TempEnemy enemy;
+        bool win_condition;
+    } TempRoom;
+
+    // Variabile globale
+    Game game_data;
+    TempObject temp_object;
+    TempRoom temp_room;
+    TempTrap temp_trap;
+    TempEnemy temp_enemy;
+    
+    // Arrays temporare pentru parsing
+    TempObject* temp_objects;
+    int temp_object_count;
+    TempRoom* temp_rooms;
+    int temp_room_count;
+    char* temp_start_room_name;
+
+    // Error tracking
+    int parse_error_count = 0;
+    bool parsing_failed = false;
+
+    // Funcții helper
+    void init_game();
+    void add_temp_object(TempObject obj);
+    void add_temp_room(TempRoom room);
+    void link_references();
+    Object* find_object(char* name);
+    Room* find_room(char* name);
+    void print_game_data();
+    void reset_temp_object();
+    void reset_temp_room();
+    
+    // Error handling and validation functions
+    bool object_name_exists(char* name);
+    bool room_name_exists(char* name);
+    void report_error(const char* message);
+    bool validate_game_data();
 
     int yylex(void);
     void yyerror(const char* str);
-
     extern FILE* yyin;
+    extern int yylineno;
 
-#line 82 "y.tab.c"
+#line 228 "y.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -123,10 +269,10 @@ extern int yydebug;
     YYerror = 256,                 /* error  */
     YYUNDEF = 257,                 /* "invalid token"  */
     STRING = 258,                  /* STRING  */
-    NUMBER = 259,                  /* NUMBER  */
-    TRUE = 260,                    /* TRUE  */
-    FALSE = 261,                   /* FALSE  */
-    IDENTIFIER = 262,              /* IDENTIFIER  */
+    IDENTIFIER = 259,              /* IDENTIFIER  */
+    NUMBER = 260,                  /* NUMBER  */
+    TRUE = 261,                    /* TRUE  */
+    FALSE = 262,                   /* FALSE  */
     GAME = 263,                    /* GAME  */
     START_ROOM = 264,              /* START_ROOM  */
     HEALTH = 265,                  /* HEALTH  */
@@ -139,13 +285,25 @@ extern int yydebug;
     CONTENTS = 272,                /* CONTENTS  */
     HIDDEN_ITEM = 273,             /* HIDDEN_ITEM  */
     EXAMINE = 274,                 /* EXAMINE  */
-    EQUALS = 275,                  /* EQUALS  */
-    OPEN_BRACE = 276,              /* OPEN_BRACE  */
-    CLOSED_BRACE = 277,            /* CLOSED_BRACE  */
-    LIST_START = 278,              /* LIST_START  */
-    LIST_END = 279,                /* LIST_END  */
-    COMMA = 280,                   /* COMMA  */
-    COLON = 281                    /* COLON  */
+    CONSUME_KEY = 275,             /* CONSUME_KEY  */
+    TRAP = 276,                    /* TRAP  */
+    ENEMY = 277,                   /* ENEMY  */
+    DAMAGE = 278,                  /* DAMAGE  */
+    WEAKNESS = 279,                /* WEAKNESS  */
+    DEFEAT_REWARD = 280,           /* DEFEAT_REWARD  */
+    WIN_CONDITION = 281,           /* WIN_CONDITION  */
+    NAME = 282,                    /* NAME  */
+    MESSAGE = 283,                 /* MESSAGE  */
+    PROTECTION = 284,              /* PROTECTION  */
+    PROTECTION_MESSAGE = 285,      /* PROTECTION_MESSAGE  */
+    ENTRY_MESSAGE = 286,           /* ENTRY_MESSAGE  */
+    EQUALS = 287,                  /* EQUALS  */
+    OPEN_BRACE = 288,              /* OPEN_BRACE  */
+    CLOSED_BRACE = 289,            /* CLOSED_BRACE  */
+    LIST_START = 290,              /* LIST_START  */
+    LIST_END = 291,                /* LIST_END  */
+    COMMA = 292,                   /* COMMA  */
+    COLON = 293                    /* COLON  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -155,10 +313,10 @@ extern int yydebug;
 #define YYerror 256
 #define YYUNDEF 257
 #define STRING 258
-#define NUMBER 259
-#define TRUE 260
-#define FALSE 261
-#define IDENTIFIER 262
+#define IDENTIFIER 259
+#define NUMBER 260
+#define TRUE 261
+#define FALSE 262
 #define GAME 263
 #define START_ROOM 264
 #define HEALTH 265
@@ -171,24 +329,36 @@ extern int yydebug;
 #define CONTENTS 272
 #define HIDDEN_ITEM 273
 #define EXAMINE 274
-#define EQUALS 275
-#define OPEN_BRACE 276
-#define CLOSED_BRACE 277
-#define LIST_START 278
-#define LIST_END 279
-#define COMMA 280
-#define COLON 281
+#define CONSUME_KEY 275
+#define TRAP 276
+#define ENEMY 277
+#define DAMAGE 278
+#define WEAKNESS 279
+#define DEFEAT_REWARD 280
+#define WIN_CONDITION 281
+#define NAME 282
+#define MESSAGE 283
+#define PROTECTION 284
+#define PROTECTION_MESSAGE 285
+#define ENTRY_MESSAGE 286
+#define EQUALS 287
+#define OPEN_BRACE 288
+#define CLOSED_BRACE 289
+#define LIST_START 290
+#define LIST_END 291
+#define COMMA 292
+#define COLON 293
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 12 "yacc_source.y"
+#line 158 "yacc_source.y"
 
     char* str;
     int number;
 
-#line 192 "y.tab.c"
+#line 362 "y.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -212,10 +382,10 @@ enum yysymbol_kind_t
   YYSYMBOL_YYerror = 1,                    /* error  */
   YYSYMBOL_YYUNDEF = 2,                    /* "invalid token"  */
   YYSYMBOL_STRING = 3,                     /* STRING  */
-  YYSYMBOL_NUMBER = 4,                     /* NUMBER  */
-  YYSYMBOL_TRUE = 5,                       /* TRUE  */
-  YYSYMBOL_FALSE = 6,                      /* FALSE  */
-  YYSYMBOL_IDENTIFIER = 7,                 /* IDENTIFIER  */
+  YYSYMBOL_IDENTIFIER = 4,                 /* IDENTIFIER  */
+  YYSYMBOL_NUMBER = 5,                     /* NUMBER  */
+  YYSYMBOL_TRUE = 6,                       /* TRUE  */
+  YYSYMBOL_FALSE = 7,                      /* FALSE  */
   YYSYMBOL_GAME = 8,                       /* GAME  */
   YYSYMBOL_START_ROOM = 9,                 /* START_ROOM  */
   YYSYMBOL_HEALTH = 10,                    /* HEALTH  */
@@ -228,32 +398,53 @@ enum yysymbol_kind_t
   YYSYMBOL_CONTENTS = 17,                  /* CONTENTS  */
   YYSYMBOL_HIDDEN_ITEM = 18,               /* HIDDEN_ITEM  */
   YYSYMBOL_EXAMINE = 19,                   /* EXAMINE  */
-  YYSYMBOL_EQUALS = 20,                    /* EQUALS  */
-  YYSYMBOL_OPEN_BRACE = 21,                /* OPEN_BRACE  */
-  YYSYMBOL_CLOSED_BRACE = 22,              /* CLOSED_BRACE  */
-  YYSYMBOL_LIST_START = 23,                /* LIST_START  */
-  YYSYMBOL_LIST_END = 24,                  /* LIST_END  */
-  YYSYMBOL_COMMA = 25,                     /* COMMA  */
-  YYSYMBOL_COLON = 26,                     /* COLON  */
-  YYSYMBOL_YYACCEPT = 27,                  /* $accept  */
-  YYSYMBOL_program = 28,                   /* program  */
-  YYSYMBOL_configuration = 29,             /* configuration  */
-  YYSYMBOL_start_room = 30,                /* start_room  */
-  YYSYMBOL_health = 31,                    /* health  */
-  YYSYMBOL_list_of_rooms = 32,             /* list_of_rooms  */
-  YYSYMBOL_room_config = 33,               /* room_config  */
-  YYSYMBOL_room_description = 34,          /* room_description  */
-  YYSYMBOL_room_objects = 35,              /* room_objects  */
-  YYSYMBOL_object_list = 36,               /* object_list  */
-  YYSYMBOL_object_config = 37,             /* object_config  */
-  YYSYMBOL_object_description_list = 38,   /* object_description_list  */
-  YYSYMBOL_object_description = 39,        /* object_description  */
-  YYSYMBOL_list_of_items = 40,             /* list_of_items  */
-  YYSYMBOL_item_list = 41,                 /* item_list  */
-  YYSYMBOL_item = 42,                      /* item  */
-  YYSYMBOL_room_connections = 43,          /* room_connections  */
-  YYSYMBOL_connection_list = 44,           /* connection_list  */
-  YYSYMBOL_connection = 45                 /* connection  */
+  YYSYMBOL_CONSUME_KEY = 20,               /* CONSUME_KEY  */
+  YYSYMBOL_TRAP = 21,                      /* TRAP  */
+  YYSYMBOL_ENEMY = 22,                     /* ENEMY  */
+  YYSYMBOL_DAMAGE = 23,                    /* DAMAGE  */
+  YYSYMBOL_WEAKNESS = 24,                  /* WEAKNESS  */
+  YYSYMBOL_DEFEAT_REWARD = 25,             /* DEFEAT_REWARD  */
+  YYSYMBOL_WIN_CONDITION = 26,             /* WIN_CONDITION  */
+  YYSYMBOL_NAME = 27,                      /* NAME  */
+  YYSYMBOL_MESSAGE = 28,                   /* MESSAGE  */
+  YYSYMBOL_PROTECTION = 29,                /* PROTECTION  */
+  YYSYMBOL_PROTECTION_MESSAGE = 30,        /* PROTECTION_MESSAGE  */
+  YYSYMBOL_ENTRY_MESSAGE = 31,             /* ENTRY_MESSAGE  */
+  YYSYMBOL_EQUALS = 32,                    /* EQUALS  */
+  YYSYMBOL_OPEN_BRACE = 33,                /* OPEN_BRACE  */
+  YYSYMBOL_CLOSED_BRACE = 34,              /* CLOSED_BRACE  */
+  YYSYMBOL_LIST_START = 35,                /* LIST_START  */
+  YYSYMBOL_LIST_END = 36,                  /* LIST_END  */
+  YYSYMBOL_COMMA = 37,                     /* COMMA  */
+  YYSYMBOL_COLON = 38,                     /* COLON  */
+  YYSYMBOL_YYACCEPT = 39,                  /* $accept  */
+  YYSYMBOL_program = 40,                   /* program  */
+  YYSYMBOL_41_1 = 41,                      /* $@1  */
+  YYSYMBOL_configuration = 42,             /* configuration  */
+  YYSYMBOL_start_room = 43,                /* start_room  */
+  YYSYMBOL_health = 44,                    /* health  */
+  YYSYMBOL_objects = 45,                   /* objects  */
+  YYSYMBOL_list_of_objects = 46,           /* list_of_objects  */
+  YYSYMBOL_object_config = 47,             /* object_config  */
+  YYSYMBOL_48_2 = 48,                      /* $@2  */
+  YYSYMBOL_object_props = 49,              /* object_props  */
+  YYSYMBOL_object_prop = 50,               /* object_prop  */
+  YYSYMBOL_item_list = 51,                 /* item_list  */
+  YYSYMBOL_rooms = 52,                     /* rooms  */
+  YYSYMBOL_room_definition = 53,           /* room_definition  */
+  YYSYMBOL_54_3 = 54,                      /* $@3  */
+  YYSYMBOL_room_content_list = 55,         /* room_content_list  */
+  YYSYMBOL_room_content = 56,              /* room_content  */
+  YYSYMBOL_object_list = 57,               /* object_list  */
+  YYSYMBOL_req_list = 58,                  /* req_list  */
+  YYSYMBOL_connection_list = 59,           /* connection_list  */
+  YYSYMBOL_connection = 60,                /* connection  */
+  YYSYMBOL_trap_definition = 61,           /* trap_definition  */
+  YYSYMBOL_trap_props = 62,                /* trap_props  */
+  YYSYMBOL_trap_prop = 63,                 /* trap_prop  */
+  YYSYMBOL_enemy_definition = 64,          /* enemy_definition  */
+  YYSYMBOL_enemy_props = 65,               /* enemy_props  */
+  YYSYMBOL_enemy_prop = 66                 /* enemy_prop  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -370,7 +561,7 @@ typedef int yytype_uint16;
 
 
 /* Stored state numbers (used for stacks). */
-typedef yytype_int8 yy_state_t;
+typedef yytype_uint8 yy_state_t;
 
 /* State numbers in computations.  */
 typedef int yy_state_fast_t;
@@ -581,19 +772,19 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  4
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   60
+#define YYLAST   141
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  27
+#define YYNTOKENS  39
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  19
+#define YYNNTS  28
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  29
+#define YYNRULES  67
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  78
+#define YYNSTATES  144
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   281
+#define YYMAXUTOK   293
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -635,16 +826,21 @@ static const yytype_int8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26
+      25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
+      35,    36,    37,    38
 };
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
-static const yytype_int8 yyrline[] =
+static const yytype_int16 yyrline[] =
 {
-       0,    31,    31,    34,    37,    40,    43,    44,    47,    51,
-      54,    57,    58,    61,    64,    65,    68,    69,    70,    71,
-      72,    73,    76,    79,    80,    82,    85,    88,    89,    92
+       0,   177,   177,   177,   195,   198,   207,   216,   219,   220,
+     223,   223,   241,   242,   243,   246,   247,   248,   255,   256,
+     263,   270,   271,   274,   283,   292,   295,   296,   297,   300,
+     300,   318,   319,   320,   323,   330,   331,   332,   341,   342,
+     349,   350,   351,   354,   363,   372,   375,   384,   395,   396,
+     397,   400,   417,   423,   424,   425,   428,   435,   442,   449,
+     458,   464,   465,   466,   469,   476,   483,   490
 };
 #endif
 
@@ -660,16 +856,19 @@ static const char *yysymbol_name (yysymbol_kind_t yysymbol) YY_ATTRIBUTE_UNUSED;
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "\"end of file\"", "error", "\"invalid token\"", "STRING", "NUMBER",
-  "TRUE", "FALSE", "IDENTIFIER", "GAME", "START_ROOM", "HEALTH", "ROOM",
+  "\"end of file\"", "error", "\"invalid token\"", "STRING", "IDENTIFIER",
+  "NUMBER", "TRUE", "FALSE", "GAME", "START_ROOM", "HEALTH", "ROOM",
   "DESCRIPTION", "OBJECTS", "CONNECTIONS", "TAKEABLE", "REQUIRES",
-  "CONTENTS", "HIDDEN_ITEM", "EXAMINE", "EQUALS", "OPEN_BRACE",
-  "CLOSED_BRACE", "LIST_START", "LIST_END", "COMMA", "COLON", "$accept",
-  "program", "configuration", "start_room", "health", "list_of_rooms",
-  "room_config", "room_description", "room_objects", "object_list",
-  "object_config", "object_description_list", "object_description",
-  "list_of_items", "item_list", "item", "room_connections",
-  "connection_list", "connection", YY_NULLPTR
+  "CONTENTS", "HIDDEN_ITEM", "EXAMINE", "CONSUME_KEY", "TRAP", "ENEMY",
+  "DAMAGE", "WEAKNESS", "DEFEAT_REWARD", "WIN_CONDITION", "NAME",
+  "MESSAGE", "PROTECTION", "PROTECTION_MESSAGE", "ENTRY_MESSAGE", "EQUALS",
+  "OPEN_BRACE", "CLOSED_BRACE", "LIST_START", "LIST_END", "COMMA", "COLON",
+  "$accept", "program", "$@1", "configuration", "start_room", "health",
+  "objects", "list_of_objects", "object_config", "$@2", "object_props",
+  "object_prop", "item_list", "rooms", "room_definition", "$@3",
+  "room_content_list", "room_content", "object_list", "req_list",
+  "connection_list", "connection", "trap_definition", "trap_props",
+  "trap_prop", "enemy_definition", "enemy_props", "enemy_prop", YY_NULLPTR
 };
 
 static const char *
@@ -679,7 +878,7 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-37)
+#define YYPACT_NINF (-29)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -693,14 +892,21 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-       6,    12,    16,    -3,   -37,    10,     0,    -1,    13,    19,
-     -37,     4,    14,   -37,    22,    24,    14,   -37,   -37,     7,
-     -37,    17,    11,    20,    27,    15,    18,   -37,    21,    23,
-      25,    29,    26,   -37,     8,   -17,   -37,    30,    31,   -37,
-      29,    28,    -7,   -37,   -14,   -37,    35,   -37,   -37,    33,
-      36,    37,    38,    39,   -16,   -37,   -37,     5,    42,    32,
-      43,    45,   -37,   -14,   -37,   -37,   -37,    47,   -37,   -37,
-     -37,   -37,   -37,   -12,   -37,   -37,    47,   -37
+       0,     1,    19,    -6,   -29,   -29,    20,    21,    -2,    52,
+      64,   -29,    42,    60,   -29,    70,    43,    66,   -29,    74,
+      76,    66,   -29,    44,   -28,   -29,    47,   -29,    48,   -29,
+      74,   -29,   -29,   -29,    12,    40,    51,    53,    54,    55,
+      56,    57,    59,    61,   -11,   -29,   -29,   -29,    62,    63,
+      65,    67,    68,    69,    29,   -29,    81,    71,    72,    -4,
+       7,    41,    82,    89,   -29,   -29,    10,    92,    73,    94,
+      99,    15,   -29,   -29,   -29,   100,   101,   -29,   105,    78,
+      79,    80,    83,   -16,   -29,    84,    85,    86,    87,    27,
+     -29,   -29,   -29,   -29,   -29,   -29,   109,   -29,   -29,   -29,
+     -29,   -29,     3,    88,     5,   -29,   -29,    33,    98,   111,
+     116,   118,   -29,   -29,   117,   119,   120,   122,   -29,   -29,
+     -29,    35,   -29,   123,   125,   -29,   101,   -29,   126,   -29,
+     -29,   -29,   -29,   -29,   -29,   -29,   -29,   -29,   127,   -29,
+     -29,   -29,   -29,   -29
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -708,83 +914,123 @@ static const yytype_int8 yypact[] =
    means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-       0,     0,     0,     0,     1,     0,     0,     0,     0,     0,
-       2,     0,     0,     4,     0,     0,     3,     7,     5,     0,
-       6,     0,     0,     0,     0,     0,     0,     9,     0,     0,
-       0,     0,     0,     8,     0,     0,    12,     0,     0,    10,
-       0,     0,     0,    28,     0,    11,     0,    26,    27,     0,
-       0,     0,     0,     0,     0,    15,    29,     0,     0,     0,
-       0,     0,    13,     0,    16,    17,    18,     0,    19,    20,
-      21,    14,    25,     0,    24,    22,     0,    23
+       0,     0,     0,     0,     1,     2,     0,     0,     0,     0,
+       0,     3,     0,     0,     5,     0,     0,    28,     6,     0,
+       0,     4,    27,     0,     0,     9,     0,    26,     0,     7,
+       0,    29,    10,     8,    33,    14,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,    32,    40,    41,     0,     0,
+       0,     0,     0,     0,     0,    13,     0,     0,     0,     0,
+      55,    63,     0,     0,    30,    31,     0,     0,     0,     0,
+       0,     0,    11,    12,    34,    45,    50,    37,     0,     0,
+       0,     0,     0,     0,    54,     0,     0,     0,     0,     0,
+      62,    42,    39,    15,    16,    17,    25,    19,    20,    21,
+      22,    44,     0,     0,     0,    49,    47,     0,     0,     0,
+       0,     0,    52,    53,     0,     0,     0,     0,    60,    61,
+      24,     0,    35,     0,     0,    36,     0,    38,     0,    56,
+      57,    58,    59,    65,    66,    67,    64,    18,     0,    43,
+      51,    48,    46,    23
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -37,   -37,   -37,   -37,   -37,   -37,    44,   -37,   -37,   -37,
-       1,   -37,   -24,   -37,   -37,   -36,   -37,   -37,     9
+     -29,   -29,   -29,   -29,   -29,   -29,   -29,   -29,   102,   -29,
+     -29,    75,   -29,   -29,   112,   -29,   -29,    90,   -29,   -29,
+     -29,     9,   -29,   -29,    58,   -29,   -29,    49
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,     2,     7,     8,    12,    16,    17,    23,    26,    35,
-      36,    54,    55,    68,    73,    74,    30,    42,    43
+       0,     2,     6,     8,     9,    13,    17,    24,    25,    35,
+      54,    55,   121,    21,    22,    34,    44,    45,   102,   107,
+     104,   105,    46,    83,    84,    47,    89,    90
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
    positive, shift that token.  If negative, reduce the rule whose
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
-static const yytype_int8 yytable[] =
+static const yytype_uint8 yytable[] =
 {
-      41,    49,    50,    51,    52,    53,    62,    39,    40,    63,
-      64,    65,    75,    76,     1,     3,     4,    47,     5,     6,
-       9,    10,    13,    11,    14,    15,    18,    19,    21,    22,
-      27,    24,    29,    25,    38,    28,    34,    41,    56,    71,
-      77,    45,     0,    32,    31,    66,    69,    33,    70,    37,
-      72,    48,    44,    57,    46,    67,    58,    59,    60,    61,
-      20
+      77,    36,    37,    38,     3,    39,    29,    79,     1,    30,
+      40,    41,    80,    81,    82,    42,    93,    94,   112,     4,
+      43,    99,   100,    64,    36,    37,    38,     5,    39,     7,
+      79,    78,    11,    40,    41,    80,    81,    82,    42,   122,
+     123,   125,   126,    43,    48,    49,    50,    51,    52,    53,
+      85,    86,    87,    10,    88,    48,    49,    50,    51,    52,
+      53,   118,    12,    72,    85,    86,    87,    14,    88,   127,
+     128,   137,   138,    16,    15,    18,    19,    20,    23,    26,
+      31,    32,    28,    56,    74,    57,    58,    59,    91,    60,
+      61,    62,    92,    63,    66,    67,    95,    68,    97,    69,
+      70,    71,    98,   129,   101,   103,    75,    76,    96,   106,
+     108,   109,   110,   120,   130,   111,   114,   115,   116,   117,
+     131,   132,   133,   134,   135,   136,   124,   139,   140,    73,
+     142,   143,    33,    27,    65,   141,     0,     0,   119,     0,
+       0,   113
 };
 
 static const yytype_int8 yycheck[] =
 {
-       7,    15,    16,    17,    18,    19,    22,    24,    25,    25,
-       5,     6,    24,    25,     8,     3,     0,    24,    21,     9,
-      20,    22,     3,    10,    20,    11,     4,     3,    21,    12,
-       3,    20,    14,    13,    26,    20,     7,     7,     3,    63,
-      76,    40,    -1,    20,    23,     3,     3,    22,     3,    23,
-       3,    42,    21,    20,    26,    23,    20,    20,    20,    20,
-      16
+       4,    12,    13,    14,     3,    16,    34,    23,     8,    37,
+      21,    22,    28,    29,    30,    26,     6,     7,    34,     0,
+      31,     6,     7,    34,    12,    13,    14,    33,    16,     9,
+      23,    35,    34,    21,    22,    28,    29,    30,    26,    36,
+      37,    36,    37,    31,    15,    16,    17,    18,    19,    20,
+      23,    24,    25,    32,    27,    15,    16,    17,    18,    19,
+      20,    34,    10,    34,    23,    24,    25,     3,    27,    36,
+      37,    36,    37,    13,    32,     5,    33,    11,     4,     3,
+      33,    33,    38,    32,     3,    32,    32,    32,     6,    33,
+      33,    32,     3,    32,    32,    32,     4,    32,     4,    32,
+      32,    32,     3,     5,     4,     4,    35,    35,    35,     4,
+      32,    32,    32,     4,     3,    32,    32,    32,    32,    32,
+       4,     3,     5,     4,     4,     3,    38,     4,     3,    54,
+       4,     4,    30,    21,    44,   126,    -1,    -1,    89,    -1,
+      -1,    83
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
    state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,     8,    28,     3,     0,    21,     9,    29,    30,    20,
-      22,    10,    31,     3,    20,    11,    32,    33,     4,     3,
-      33,    21,    12,    34,    20,    13,    35,     3,    20,    14,
-      43,    23,    20,    22,     7,    36,    37,    23,    26,    24,
-      25,     7,    44,    45,    21,    37,    26,    24,    45,    15,
-      16,    17,    18,    19,    38,    39,     3,    20,    20,    20,
-      20,    20,    22,    25,     5,     6,     3,    23,    40,     3,
-       3,    39,     3,    41,    42,    24,    25,    42
+       0,     8,    40,     3,     0,    33,    41,     9,    42,    43,
+      32,    34,    10,    44,     3,    32,    13,    45,     5,    33,
+      11,    52,    53,     4,    46,    47,     3,    53,    38,    34,
+      37,    33,    33,    47,    54,    48,    12,    13,    14,    16,
+      21,    22,    26,    31,    55,    56,    61,    64,    15,    16,
+      17,    18,    19,    20,    49,    50,    32,    32,    32,    32,
+      33,    33,    32,    32,    34,    56,    32,    32,    32,    32,
+      32,    32,    34,    50,     3,    35,    35,     4,    35,    23,
+      28,    29,    30,    62,    63,    23,    24,    25,    27,    65,
+      66,     6,     3,     6,     7,     4,    35,     4,     3,     6,
+       7,     4,    57,     4,    59,    60,     4,    58,    32,    32,
+      32,    32,    34,    63,    32,    32,    32,    32,    34,    66,
+       4,    51,    36,    37,    38,    36,    37,    36,    37,     5,
+       3,     4,     3,     5,     4,     4,     3,    36,    37,     4,
+       3,    60,     4,     4
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    27,    28,    29,    30,    31,    32,    32,    33,    34,
-      35,    36,    36,    37,    38,    38,    39,    39,    39,    39,
-      39,    39,    40,    41,    41,    42,    43,    44,    44,    45
+       0,    39,    41,    40,    42,    43,    44,    45,    46,    46,
+      48,    47,    49,    49,    49,    50,    50,    50,    50,    50,
+      50,    50,    50,    51,    51,    51,    52,    52,    52,    54,
+      53,    55,    55,    55,    56,    56,    56,    56,    56,    56,
+      56,    56,    56,    57,    57,    57,    58,    58,    59,    59,
+      59,    60,    61,    62,    62,    62,    63,    63,    63,    63,
+      64,    65,    65,    65,    66,    66,    66,    66
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr2[] =
 {
-       0,     2,     5,     3,     3,     3,     2,     1,     7,     3,
-       5,     3,     1,     5,     3,     1,     3,     3,     3,     3,
-       3,     3,     3,     3,     1,     1,     5,     2,     1,     3
+       0,     2,     0,     6,     4,     3,     3,     4,     3,     1,
+       0,     6,     2,     1,     0,     3,     3,     3,     5,     3,
+       3,     3,     3,     3,     1,     0,     2,     1,     0,     0,
+       6,     2,     1,     0,     3,     5,     5,     3,     5,     3,
+       1,     1,     3,     3,     1,     0,     3,     1,     3,     1,
+       0,     3,     4,     2,     1,     0,     3,     3,     3,     3,
+       4,     2,     1,     0,     3,     3,     3,     3
 };
 
 
@@ -1247,86 +1493,435 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-  case 2: /* program: GAME STRING OPEN_BRACE configuration CLOSED_BRACE  */
-#line 31 "yacc_source.y"
-                                                            { printf("Game: %s\n", (yyvsp[-3].str)); }
-#line 1254 "y.tab.c"
+  case 2: /* $@1: %empty  */
+#line 177 "yacc_source.y"
+                                { 
+            init_game(); 
+            if ((yyvsp[-1].str) == NULL || strlen((yyvsp[-1].str)) == 0) {
+                report_error("Game name cannot be empty");
+                YYERROR;
+            }
+            game_data.game_name = strdup((yyvsp[-1].str)); 
+        }
+#line 1507 "y.tab.c"
     break;
 
-  case 4: /* start_room: START_ROOM EQUALS STRING  */
-#line 37 "yacc_source.y"
-                                     { printf("Start Room: %s\n", (yyvsp[0].str)); }
-#line 1260 "y.tab.c"
+  case 3: /* program: GAME STRING OPEN_BRACE $@1 configuration CLOSED_BRACE  */
+#line 184 "yacc_source.y"
+                                     {
+            if (!parsing_failed && validate_game_data()) {
+                link_references();
+                // Don't print game data here anymore
+            } else {
+                printf("Parsing failed due to validation errors.\n");
+                YYERROR;
+            }
+        }
+#line 1521 "y.tab.c"
     break;
 
-  case 5: /* health: HEALTH EQUALS NUMBER  */
-#line 40 "yacc_source.y"
-                             { printf("Health: %d\n", (yyvsp[0].number)); }
-#line 1266 "y.tab.c"
+  case 5: /* start_room: START_ROOM EQUALS STRING  */
+#line 198 "yacc_source.y"
+                                     { 
+            if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
+                report_error("Start room name cannot be empty");
+                YYERROR;
+            }
+            temp_start_room_name = strdup((yyvsp[0].str)); 
+        }
+#line 1533 "y.tab.c"
     break;
 
-  case 8: /* room_config: ROOM STRING OPEN_BRACE room_description room_objects room_connections CLOSED_BRACE  */
-#line 48 "yacc_source.y"
-            { printf("Room: %s\n", (yyvsp[-5].str)); }
-#line 1272 "y.tab.c"
+  case 6: /* health: HEALTH EQUALS NUMBER  */
+#line 207 "yacc_source.y"
+                             { 
+            if ((yyvsp[0].number) <= 0) {
+                report_error("Health must be a positive number");
+                YYERROR;
+            }
+            game_data.health = (yyvsp[0].number); 
+        }
+#line 1545 "y.tab.c"
     break;
 
-  case 9: /* room_description: DESCRIPTION EQUALS STRING  */
-#line 51 "yacc_source.y"
-                                            { printf("Description: %s\n", (yyvsp[0].str)); }
-#line 1278 "y.tab.c"
+  case 10: /* $@2: %empty  */
+#line 223 "yacc_source.y"
+                                           {
+                if ((yyvsp[-2].str) == NULL || strlen((yyvsp[-2].str)) == 0) {
+                    report_error("Object name cannot be empty");
+                    YYERROR;
+                }
+                if (object_name_exists((yyvsp[-2].str))) {
+                    char error_msg[256];
+                    snprintf(error_msg, sizeof(error_msg), "Object '%s' already exists", (yyvsp[-2].str));
+                    report_error(error_msg);
+                    YYERROR;
+                }
+                reset_temp_object();
+                temp_object.name = strdup((yyvsp[-2].str));
+            }
+#line 1564 "y.tab.c"
     break;
 
-  case 13: /* object_config: IDENTIFIER COLON OPEN_BRACE object_description_list CLOSED_BRACE  */
-#line 62 "yacc_source.y"
-            { printf("Object: %s\n", (yyvsp[-4].str)); }
-#line 1284 "y.tab.c"
+  case 11: /* object_config: IDENTIFIER COLON OPEN_BRACE $@2 object_props CLOSED_BRACE  */
+#line 236 "yacc_source.y"
+                                        {
+                add_temp_object(temp_object);
+            }
+#line 1572 "y.tab.c"
     break;
 
-  case 16: /* object_description: TAKEABLE EQUALS TRUE  */
-#line 68 "yacc_source.y"
-                                         { printf("Takeable: TRUE\n"); }
-#line 1290 "y.tab.c"
+  case 15: /* object_prop: TAKEABLE EQUALS TRUE  */
+#line 246 "yacc_source.y"
+                                  { temp_object.takeable = true; }
+#line 1578 "y.tab.c"
     break;
 
-  case 17: /* object_description: TAKEABLE EQUALS FALSE  */
-#line 69 "yacc_source.y"
-                                   { printf("Takeable: FALSE\n"); }
-#line 1296 "y.tab.c"
+  case 16: /* object_prop: TAKEABLE EQUALS FALSE  */
+#line 247 "yacc_source.y"
+                                    { temp_object.takeable = false; }
+#line 1584 "y.tab.c"
     break;
 
-  case 18: /* object_description: REQUIRES EQUALS STRING  */
-#line 70 "yacc_source.y"
-                                    { printf("Requires: %s\n", (yyvsp[0].str)); }
-#line 1302 "y.tab.c"
+  case 17: /* object_prop: REQUIRES EQUALS IDENTIFIER  */
+#line 248 "yacc_source.y"
+                                         { 
+                if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
+                    report_error("Required object name cannot be empty");
+                    YYERROR;
+                }
+                temp_object.requires_name = strdup((yyvsp[0].str)); 
+            }
+#line 1596 "y.tab.c"
     break;
 
-  case 20: /* object_description: HIDDEN_ITEM EQUALS STRING  */
-#line 72 "yacc_source.y"
-                                       { printf("Hidden Item: %s\n", (yyvsp[0].str)); }
-#line 1308 "y.tab.c"
+  case 19: /* object_prop: HIDDEN_ITEM EQUALS IDENTIFIER  */
+#line 256 "yacc_source.y"
+                                            { 
+                if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
+                    report_error("Hidden item name cannot be empty");
+                    YYERROR;
+                }
+                temp_object.hidden_item_name = strdup((yyvsp[0].str)); 
+            }
+#line 1608 "y.tab.c"
     break;
 
-  case 21: /* object_description: EXAMINE EQUALS STRING  */
-#line 73 "yacc_source.y"
-                                   { printf("Examine: %s\n", (yyvsp[0].str)); }
-#line 1314 "y.tab.c"
+  case 20: /* object_prop: EXAMINE EQUALS STRING  */
+#line 263 "yacc_source.y"
+                                    { 
+                if ((yyvsp[0].str) == NULL) {
+                    report_error("Examine text cannot be null");
+                    YYERROR;
+                }
+                temp_object.examine_text = strdup((yyvsp[0].str)); 
+            }
+#line 1620 "y.tab.c"
     break;
 
-  case 25: /* item: STRING  */
-#line 82 "yacc_source.y"
-                { printf("Item: %s\n", (yyvsp[0].str)); }
-#line 1320 "y.tab.c"
+  case 21: /* object_prop: CONSUME_KEY EQUALS TRUE  */
+#line 270 "yacc_source.y"
+                                      { temp_object.consume_key = true; }
+#line 1626 "y.tab.c"
     break;
 
-  case 29: /* connection: IDENTIFIER COLON STRING  */
-#line 93 "yacc_source.y"
-            { printf("Connection: %s -> %s\n", (yyvsp[-2].str), (yyvsp[0].str)); }
-#line 1326 "y.tab.c"
+  case 22: /* object_prop: CONSUME_KEY EQUALS FALSE  */
+#line 271 "yacc_source.y"
+                                       { temp_object.consume_key = false; }
+#line 1632 "y.tab.c"
+    break;
+
+  case 23: /* item_list: item_list COMMA IDENTIFIER  */
+#line 274 "yacc_source.y"
+                                      {
+            if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
+                report_error("Item name in contents list cannot be empty");
+                YYERROR;
+            }
+            temp_object.contents_names = realloc(temp_object.contents_names, 
+                (temp_object.content_count + 1) * sizeof(char*));
+            temp_object.contents_names[temp_object.content_count++] = strdup((yyvsp[0].str));
+        }
+#line 1646 "y.tab.c"
+    break;
+
+  case 24: /* item_list: IDENTIFIER  */
+#line 283 "yacc_source.y"
+                     {
+            if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
+                report_error("Item name in contents list cannot be empty");
+                YYERROR;
+            }
+            temp_object.contents_names = malloc(sizeof(char*));
+            temp_object.contents_names[0] = strdup((yyvsp[0].str));
+            temp_object.content_count = 1;
+        }
+#line 1660 "y.tab.c"
+    break;
+
+  case 29: /* $@3: %empty  */
+#line 300 "yacc_source.y"
+                                        {
+                if ((yyvsp[-1].str) == NULL || strlen((yyvsp[-1].str)) == 0) {
+                    report_error("Room name cannot be empty");
+                    YYERROR;
+                }
+                if (room_name_exists((yyvsp[-1].str))) {
+                    char error_msg[256];
+                    snprintf(error_msg, sizeof(error_msg), "Room '%s' already exists", (yyvsp[-1].str));
+                    report_error(error_msg);
+                    YYERROR;
+                }
+                reset_temp_room();
+                temp_room.name = strdup((yyvsp[-1].str));
+            }
+#line 1679 "y.tab.c"
+    break;
+
+  case 30: /* room_definition: ROOM STRING OPEN_BRACE $@3 room_content_list CLOSED_BRACE  */
+#line 313 "yacc_source.y"
+                                             {
+                add_temp_room(temp_room);
+            }
+#line 1687 "y.tab.c"
+    break;
+
+  case 34: /* room_content: DESCRIPTION EQUALS STRING  */
+#line 323 "yacc_source.y"
+                                        { 
+                if ((yyvsp[0].str) == NULL) {
+                    report_error("Room description cannot be null");
+                    YYERROR;
+                }
+                temp_room.description = strdup((yyvsp[0].str)); 
+            }
+#line 1699 "y.tab.c"
+    break;
+
+  case 37: /* room_content: REQUIRES EQUALS IDENTIFIER  */
+#line 332 "yacc_source.y"
+                                         { 
+                if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
+                    report_error("Required object name cannot be empty");
+                    YYERROR;
+                }
+                temp_room.requires_names = malloc(sizeof(char*));
+                temp_room.requires_names[0] = strdup((yyvsp[0].str));
+                temp_room.requires_count = 1;
+            }
+#line 1713 "y.tab.c"
+    break;
+
+  case 39: /* room_content: ENTRY_MESSAGE EQUALS STRING  */
+#line 342 "yacc_source.y"
+                                          { 
+                if ((yyvsp[0].str) == NULL) {
+                    report_error("Entry message cannot be null");
+                    YYERROR;
+                }
+                temp_room.entry_message = strdup((yyvsp[0].str)); 
+            }
+#line 1725 "y.tab.c"
+    break;
+
+  case 42: /* room_content: WIN_CONDITION EQUALS TRUE  */
+#line 351 "yacc_source.y"
+                                        { temp_room.win_condition = true; }
+#line 1731 "y.tab.c"
+    break;
+
+  case 43: /* object_list: object_list COMMA IDENTIFIER  */
+#line 354 "yacc_source.y"
+                                          {
+            if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
+                report_error("Object name in room cannot be empty");
+                YYERROR;
+            }
+            temp_room.objects_names = realloc(temp_room.objects_names, 
+                (temp_room.object_count + 1) * sizeof(char*));
+            temp_room.objects_names[temp_room.object_count++] = strdup((yyvsp[0].str));
+        }
+#line 1745 "y.tab.c"
+    break;
+
+  case 44: /* object_list: IDENTIFIER  */
+#line 363 "yacc_source.y"
+                     {
+            if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
+                report_error("Object name in room cannot be empty");
+                YYERROR;
+            }
+            temp_room.objects_names = malloc(sizeof(char*));
+            temp_room.objects_names[0] = strdup((yyvsp[0].str));
+            temp_room.object_count = 1;
+        }
+#line 1759 "y.tab.c"
+    break;
+
+  case 46: /* req_list: req_list COMMA IDENTIFIER  */
+#line 375 "yacc_source.y"
+                                    {
+            if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
+                report_error("Required object name cannot be empty");
+                YYERROR;
+            }
+            temp_room.requires_names = realloc(temp_room.requires_names, 
+                (temp_room.requires_count + 1) * sizeof(char*));
+            temp_room.requires_names[temp_room.requires_count++] = strdup((yyvsp[0].str));
+        }
+#line 1773 "y.tab.c"
+    break;
+
+  case 47: /* req_list: IDENTIFIER  */
+#line 384 "yacc_source.y"
+                     {
+            if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
+                report_error("Required object name cannot be empty");
+                YYERROR;
+            }
+            temp_room.requires_names = malloc(sizeof(char*));
+            temp_room.requires_names[0] = strdup((yyvsp[0].str));
+            temp_room.requires_count = 1;
+        }
+#line 1787 "y.tab.c"
+    break;
+
+  case 51: /* connection: IDENTIFIER COLON STRING  */
+#line 400 "yacc_source.y"
+                                    {
+            if ((yyvsp[-2].str) == NULL || strlen((yyvsp[-2].str)) == 0) {
+                report_error("Connection direction cannot be empty");
+                YYERROR;
+            }
+            if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
+                report_error("Connected room name cannot be empty");
+                YYERROR;
+            }
+            temp_room.connections = realloc(temp_room.connections, 
+                (temp_room.connection_count + 1) * sizeof(TempConnection));
+            temp_room.connections[temp_room.connection_count].direction = strdup((yyvsp[-2].str));
+            temp_room.connections[temp_room.connection_count].room_name = strdup((yyvsp[0].str));
+            temp_room.connection_count++;
+        }
+#line 1807 "y.tab.c"
+    break;
+
+  case 52: /* trap_definition: TRAP OPEN_BRACE trap_props CLOSED_BRACE  */
+#line 417 "yacc_source.y"
+                                                         {
+                temp_room.has_trap = true;
+                temp_room.trap = temp_trap;
+            }
+#line 1816 "y.tab.c"
+    break;
+
+  case 56: /* trap_prop: DAMAGE EQUALS NUMBER  */
+#line 428 "yacc_source.y"
+                                { 
+                if ((yyvsp[0].number) < 0) {
+                    report_error("Trap damage cannot be negative");
+                    YYERROR;
+                }
+                temp_trap.damage = (yyvsp[0].number); 
+            }
+#line 1828 "y.tab.c"
+    break;
+
+  case 57: /* trap_prop: MESSAGE EQUALS STRING  */
+#line 435 "yacc_source.y"
+                                    { 
+                if ((yyvsp[0].str) == NULL) {
+                    report_error("Trap message cannot be null");
+                    YYERROR;
+                }
+                temp_trap.message = strdup((yyvsp[0].str)); 
+            }
+#line 1840 "y.tab.c"
+    break;
+
+  case 58: /* trap_prop: PROTECTION EQUALS IDENTIFIER  */
+#line 442 "yacc_source.y"
+                                           { 
+                if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
+                    report_error("Protection object name cannot be empty");
+                    YYERROR;
+                }
+                temp_trap.protection_name = strdup((yyvsp[0].str)); 
+            }
+#line 1852 "y.tab.c"
+    break;
+
+  case 59: /* trap_prop: PROTECTION_MESSAGE EQUALS STRING  */
+#line 449 "yacc_source.y"
+                                               { 
+                if ((yyvsp[0].str) == NULL) {
+                    report_error("Protection message cannot be null");
+                    YYERROR;
+                }
+                temp_trap.protection_message = strdup((yyvsp[0].str)); 
+            }
+#line 1864 "y.tab.c"
+    break;
+
+  case 60: /* enemy_definition: ENEMY OPEN_BRACE enemy_props CLOSED_BRACE  */
+#line 458 "yacc_source.y"
+                                                            {
+                temp_room.has_enemy = true;
+                temp_room.enemy = temp_enemy;
+            }
+#line 1873 "y.tab.c"
+    break;
+
+  case 64: /* enemy_prop: NAME EQUALS STRING  */
+#line 469 "yacc_source.y"
+                               { 
+                if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
+                    report_error("Enemy name cannot be empty");
+                    YYERROR;
+                }
+                temp_enemy.name = strdup((yyvsp[0].str)); 
+            }
+#line 1885 "y.tab.c"
+    break;
+
+  case 65: /* enemy_prop: DAMAGE EQUALS NUMBER  */
+#line 476 "yacc_source.y"
+                                   { 
+                if ((yyvsp[0].number) < 0) {
+                    report_error("Enemy damage cannot be negative");
+                    YYERROR;
+                }
+                temp_enemy.damage = (yyvsp[0].number); 
+            }
+#line 1897 "y.tab.c"
+    break;
+
+  case 66: /* enemy_prop: WEAKNESS EQUALS IDENTIFIER  */
+#line 483 "yacc_source.y"
+                                         { 
+                if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
+                    report_error("Enemy weakness object name cannot be empty");
+                    YYERROR;
+                }
+                temp_enemy.weakness_name = strdup((yyvsp[0].str)); 
+            }
+#line 1909 "y.tab.c"
+    break;
+
+  case 67: /* enemy_prop: DEFEAT_REWARD EQUALS IDENTIFIER  */
+#line 490 "yacc_source.y"
+                                              { 
+                if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
+                    report_error("Enemy defeat reward object name cannot be empty");
+                    YYERROR;
+                }
+                temp_enemy.defeat_reward_name = strdup((yyvsp[0].str)); 
+            }
+#line 1921 "y.tab.c"
     break;
 
 
-#line 1330 "y.tab.c"
+#line 1925 "y.tab.c"
 
       default: break;
     }
@@ -1519,11 +2114,342 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 95 "yacc_source.y"
+#line 499 "yacc_source.y"
 
 
-int main() {
+void report_error(const char* message) {
+    fprintf(stderr, "ERROR (line %d): %s\n", yylineno, message);
+    parse_error_count++;
+    parsing_failed = true;
+}
+
+bool object_name_exists(char* name) {
+    if (!name) return false;
+    for (int i = 0; i < temp_object_count; i++) {
+        if (temp_objects[i].name && strcmp(temp_objects[i].name, name) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool room_name_exists(char* name) {
+    if (!name) return false;
+    for (int i = 0; i < temp_room_count; i++) {
+        if (temp_rooms[i].name && strcmp(temp_rooms[i].name, name) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool validate_game_data() {
+    bool valid = true;
     
+    // Check if game has at least one room
+    if (temp_room_count == 0) {
+        report_error("Game must have at least one room");
+        valid = false;
+    }
+    
+    // Check if start room exists
+    if (temp_start_room_name && !room_name_exists(temp_start_room_name)) {
+        char error_msg[256];
+        snprintf(error_msg, sizeof(error_msg), "Start room '%s' does not exist", temp_start_room_name);
+        report_error(error_msg);
+        valid = false;
+    }
+    
+    // Validate object references
+    for (int i = 0; i < temp_object_count; i++) {
+        TempObject* obj = &temp_objects[i];
+        
+        if (obj->requires_name && !object_name_exists(obj->requires_name)) {
+            char error_msg[256];
+            snprintf(error_msg, sizeof(error_msg), "Object '%s' requires non-existent object '%s'", 
+                    obj->name, obj->requires_name);
+            report_error(error_msg);
+            valid = false;
+        }
+        
+        if (obj->hidden_item_name && !object_name_exists(obj->hidden_item_name)) {
+            char error_msg[256];
+            snprintf(error_msg, sizeof(error_msg), "Object '%s' has non-existent hidden item '%s'", 
+                    obj->name, obj->hidden_item_name);
+            report_error(error_msg);
+            valid = false;
+        }
+        
+        for (int j = 0; j < obj->content_count; j++) {
+            if (obj->contents_names[j] && !object_name_exists(obj->contents_names[j])) {
+                char error_msg[256];
+                snprintf(error_msg, sizeof(error_msg), "Object '%s' contains non-existent object '%s'", 
+                        obj->name, obj->contents_names[j]);
+                report_error(error_msg);
+                valid = false;
+            }
+        }
+    }
+    
+    // Validate room references
+    for (int i = 0; i < temp_room_count; i++) {
+        TempRoom* room = &temp_rooms[i];
+        
+        // Check room object references
+        for (int j = 0; j < room->object_count; j++) {
+            if (room->objects_names[j] && !object_name_exists(room->objects_names[j])) {
+                char error_msg[256];
+                snprintf(error_msg, sizeof(error_msg), "Room '%s' contains non-existent object '%s'", 
+                        room->name, room->objects_names[j]);
+                report_error(error_msg);
+                valid = false;
+            }
+        }
+        
+        // Check room requirement references
+        for (int j = 0; j < room->requires_count; j++) {
+            if (room->requires_names[j] && !object_name_exists(room->requires_names[j])) {
+                char error_msg[256];
+                snprintf(error_msg, sizeof(error_msg), "Room '%s' requires non-existent object '%s'", 
+                        room->name, room->requires_names[j]);
+                report_error(error_msg);
+                valid = false;
+            }
+        }
+        
+        // Check connection references
+        for (int j = 0; j < room->connection_count; j++) {
+            if (room->connections[j].room_name && !room_name_exists(room->connections[j].room_name)) {
+                char error_msg[256];
+                snprintf(error_msg, sizeof(error_msg), "Room '%s' has connection to non-existent room '%s'", 
+                        room->name, room->connections[j].room_name);
+                report_error(error_msg);
+                valid = false;
+            }
+        }
+        
+        // Check trap protection reference
+        if (room->has_trap && room->trap.protection_name && 
+            !object_name_exists(room->trap.protection_name)) {
+            char error_msg[256];
+            snprintf(error_msg, sizeof(error_msg), "Room '%s' trap protection references non-existent object '%s'", 
+                    room->name, room->trap.protection_name);
+            report_error(error_msg);
+            valid = false;
+        }
+        
+        // Check enemy references
+        if (room->has_enemy) {
+            if (room->enemy.weakness_name && !object_name_exists(room->enemy.weakness_name)) {
+                char error_msg[256];
+                snprintf(error_msg, sizeof(error_msg), "Room '%s' enemy weakness references non-existent object '%s'", 
+                        room->name, room->enemy.weakness_name);
+                report_error(error_msg);
+                valid = false;
+            }
+            
+            if (room->enemy.defeat_reward_name && !object_name_exists(room->enemy.defeat_reward_name)) {
+                char error_msg[256];
+                snprintf(error_msg, sizeof(error_msg), "Room '%s' enemy defeat reward references non-existent object '%s'", 
+                        room->name, room->enemy.defeat_reward_name);
+                report_error(error_msg);
+                valid = false;
+            }
+        }
+    }
+    
+    return valid;
+}
+
+void init_game() {
+    memset(&game_data, 0, sizeof(Game));
+    temp_objects = NULL;
+    temp_rooms = NULL;
+    temp_object_count = 0;
+    temp_room_count = 0;
+    parse_error_count = 0;
+    parsing_failed = false;
+}
+
+void reset_temp_object() {
+    memset(&temp_object, 0, sizeof(TempObject));
+}
+
+void reset_temp_room() {
+    memset(&temp_room, 0, sizeof(TempRoom));
+    memset(&temp_trap, 0, sizeof(TempTrap));
+    memset(&temp_enemy, 0, sizeof(TempEnemy));
+}
+
+void add_temp_object(TempObject obj) {
+    temp_objects = realloc(temp_objects, (temp_object_count + 1) * sizeof(TempObject));
+    if (!temp_objects) {
+        report_error("Memory allocation failed for objects");
+        return;
+    }
+    temp_objects[temp_object_count++] = obj;
+}
+
+void add_temp_room(TempRoom room) {
+    temp_rooms = realloc(temp_rooms, (temp_room_count + 1) * sizeof(TempRoom));
+    if (!temp_rooms) {
+        report_error("Memory allocation failed for rooms");
+        return;
+    }
+    temp_rooms[temp_room_count++] = room;
+}
+
+Object* find_object(char* name) {
+    if (!name) return NULL;
+    for (int i = 0; i < game_data.object_count; i++) {
+        if (strcmp(game_data.objects[i].name, name) == 0) {
+            return &game_data.objects[i];
+        }
+    }
+    return NULL;
+}
+
+Room* find_room(char* name) {
+    if (!name) return NULL;
+    for (int i = 0; i < game_data.room_count; i++) {
+        if (strcmp(game_data.rooms[i].name, name) == 0) {
+            return &game_data.rooms[i];
+        }
+    }
+    return NULL;
+}
+
+void link_references() {
+    // Creează array-urile finale
+    game_data.objects = malloc(temp_object_count * sizeof(Object));
+    if (!game_data.objects && temp_object_count > 0) {
+        report_error("Memory allocation failed for final objects array");
+        return;
+    }
+    game_data.object_count = temp_object_count;
+    
+    game_data.rooms = malloc(temp_room_count * sizeof(Room));
+    if (!game_data.rooms && temp_room_count > 0) {
+        report_error("Memory allocation failed for final rooms array");
+        return;
+    }
+    game_data.room_count = temp_room_count;
+    
+    // Copiază obiectele (fără referințe încă)
+    for (int i = 0; i < temp_object_count; i++) {
+        game_data.objects[i].name = temp_objects[i].name;
+        game_data.objects[i].takeable = temp_objects[i].takeable;
+        game_data.objects[i].examine_text = temp_objects[i].examine_text;
+        game_data.objects[i].consume_key = temp_objects[i].consume_key;
+        game_data.objects[i].content_count = 0;  // Va fi setat mai jos
+        game_data.objects[i].contents = NULL;
+        game_data.objects[i].requires = NULL;
+        game_data.objects[i].hidden_item = NULL;
+    }
+    
+    // Copiază camerele (fără referințe încă)
+    for (int i = 0; i < temp_room_count; i++) {
+        game_data.rooms[i].name = temp_rooms[i].name;
+        game_data.rooms[i].description = temp_rooms[i].description;
+        game_data.rooms[i].entry_message = temp_rooms[i].entry_message;
+        game_data.rooms[i].win_condition = temp_rooms[i].win_condition;
+        game_data.rooms[i].has_trap = temp_rooms[i].has_trap;
+        game_data.rooms[i].has_enemy = temp_rooms[i].has_enemy;
+        game_data.rooms[i].connection_count = 0;
+        game_data.rooms[i].connections = NULL;
+        game_data.rooms[i].object_count = 0;
+        game_data.rooms[i].objects = NULL;
+        game_data.rooms[i].requires_count = 0;
+        game_data.rooms[i].requires = NULL;
+    }
+    
+    // Acum leagă referințele pentru obiecte
+    for (int i = 0; i < temp_object_count; i++) {
+        // Link requires
+        game_data.objects[i].requires = find_object(temp_objects[i].requires_name);
+        
+        // Link hidden_item
+        game_data.objects[i].hidden_item = find_object(temp_objects[i].hidden_item_name);
+        
+        // Link contents
+        if (temp_objects[i].content_count > 0) {
+            game_data.objects[i].contents = malloc(temp_objects[i].content_count * sizeof(Object*));
+            if (!game_data.objects[i].contents) {
+                report_error("Memory allocation failed for object contents");
+                continue;
+            }
+            game_data.objects[i].content_count = temp_objects[i].content_count;
+            for (int j = 0; j < temp_objects[i].content_count; j++) {
+                game_data.objects[i].contents[j] = find_object(temp_objects[i].contents_names[j]);
+            }
+        }
+    }
+    
+    // Leagă referințele pentru camere
+    for (int i = 0; i < temp_room_count; i++) {
+        // Link objects
+        if (temp_rooms[i].object_count > 0) {
+            game_data.rooms[i].objects = malloc(temp_rooms[i].object_count * sizeof(Object*));
+            if (!game_data.rooms[i].objects) {
+                report_error("Memory allocation failed for room objects");
+                continue;
+            }
+            game_data.rooms[i].object_count = temp_rooms[i].object_count;
+            for (int j = 0; j < temp_rooms[i].object_count; j++) {
+                game_data.rooms[i].objects[j] = find_object(temp_rooms[i].objects_names[j]);
+            }
+        }
+        
+        // Link requires
+        if (temp_rooms[i].requires_count > 0) {
+            game_data.rooms[i].requires = malloc(temp_rooms[i].requires_count * sizeof(Object*));
+            if (!game_data.rooms[i].requires) {
+                report_error("Memory allocation failed for room requirements");
+                continue;
+            }
+            game_data.rooms[i].requires_count = temp_rooms[i].requires_count;
+            for (int j = 0; j < temp_rooms[i].requires_count; j++) {
+                game_data.rooms[i].requires[j] = find_object(temp_rooms[i].requires_names[j]);
+            }
+        }
+        
+        // Link connections
+        if (temp_rooms[i].connection_count > 0) {
+            game_data.rooms[i].connections = malloc(temp_rooms[i].connection_count * sizeof(Connection));
+            if (!game_data.rooms[i].connections) {
+                report_error("Memory allocation failed for room connections");
+                continue;
+            }
+            game_data.rooms[i].connection_count = temp_rooms[i].connection_count;
+            for (int j = 0; j < temp_rooms[i].connection_count; j++) {
+                game_data.rooms[i].connections[j].direction = temp_rooms[i].connections[j].direction;
+                game_data.rooms[i].connections[j].room = find_room(temp_rooms[i].connections[j].room_name);
+            }
+        }
+        
+        // Link trap protection
+        if (game_data.rooms[i].has_trap) {
+            game_data.rooms[i].trap.damage = temp_rooms[i].trap.damage;
+            game_data.rooms[i].trap.message = temp_rooms[i].trap.message;
+            game_data.rooms[i].trap.protection_message = temp_rooms[i].trap.protection_message;
+            game_data.rooms[i].trap.protection = find_object(temp_rooms[i].trap.protection_name);
+        }
+        
+        // Link enemy weakness and reward
+        if (game_data.rooms[i].has_enemy) {
+            game_data.rooms[i].enemy.name = temp_rooms[i].enemy.name;
+            game_data.rooms[i].enemy.damage = temp_rooms[i].enemy.damage;
+            game_data.rooms[i].enemy.weakness = find_object(temp_rooms[i].enemy.weakness_name);
+            game_data.rooms[i].enemy.defeat_reward = find_object(temp_rooms[i].enemy.defeat_reward_name);
+        }
+    }
+    
+    // Link start room
+    game_data.start_room = find_room(temp_start_room_name);
+}
+
+// Export function for game engine
+int parse_game_file() {
     FILE* config_file = fopen("config.txt", "r");
     if (!config_file) {
         fprintf(stderr, "Error: Could not open config.txt\n");
@@ -1531,17 +2457,21 @@ int main() {
     }
 
     yyin = config_file;
-
     int result = yyparse();
-
     fclose(config_file);
 
-    //if (result == 0) {
-    //}
-
-    return result;
+    if (result == 0 && !parsing_failed) {
+        printf("Game configuration loaded successfully!\n");
+        return 0;
+    } else {
+        printf("Failed to load game configuration!\n");
+        printf("Total errors: %d\n", parse_error_count);
+        return 1;
+    }
 }
 
 void yyerror(const char* str) {
-    fprintf(stderr, "Syntax error: %s\n", str);
+    fprintf(stderr, "Parse Error (line %d): %s\n", yylineno, str);
+    parse_error_count++;
+    parsing_failed = true;
 }

@@ -2,70 +2,122 @@ game "The Cursed Vault" {
   start_room = "dungeon"
   health = 3
   
+  # VERIFICARE LOGICĂ JOCULUI:
+  # 1. Dungeon: iei shield + silver_key (din loose_brick)
+  # 2. Armory (cu shield): deschizi chest cu silver_key → rusty_key + sword
+  # 3. Well_room (cu rusty_key): învingi zombie cu sword → gold_key  
+  # 4. Exit (cu rusty_key + gold_key): VICTORIE!
+  
+  objects {
+    shield: {
+      takeable = true
+      examine = "Scutul pare a putea absorbi o lovitură și a te proteja de capcane"
+    },
+    
+    silver_key: {
+      takeable = true
+      examine = "O cheie de argint strălucitoare"
+    },
+    
+    rusty_key: {
+      takeable = true
+      examine = "O cheie ruginită, dar încă funcțională"
+    },
+    
+    sword: {
+      takeable = true
+      examine = "O spadă ascuțită, perfect pentru luptă și tăierea corzilor"
+    },
+    
+    gold_key: {
+      takeable = true
+      examine = "O cheie de aur masiv, foarte grea"
+    },
+    
+    loose_brick: {
+      examine = "Caramida se mișcă când o atingi"
+      hidden_item = silver_key
+    },
+    
+    chest: {
+      requires = silver_key
+      contents = [rusty_key, sword]
+      examine = "Un cufăr cu simbolul unei coroane"
+      consume_key = false
+    }
+  }
+  
   room "dungeon" {
     description = "Temniță cu ziduri ude. O ușă de fier în nord. Pe podea zace un scut spart."
     
-    objects = [
-      shield: {
-        takeable = true
-        examine = "Scutul pare a putea absorbi o lovitură"
-      },
-      loose_brick: {
-        examine = "Caramida se mișcă"
-        hidden_item: "silver_key"
-      }
-    ]
+    objects = [shield, loose_brick]
     
     connections = [
       north: "hallway"
     ]
   }
-
+  
   room "hallway" {
-    description = "Coridor lung cu două statui. Aerul miroase a sulf."
+    description = "Coridor lung cu două statui. Aerul miroase a sulf. Vezi fante în perete pentru săgeți."
     
     connections = [
-      east: "well_room" if has_item("rusty_key"),
+      east: "well_room",
       west: "armory",
       south: "dungeon"
     ]
     
     trap {
-      damage = 1 unless has_item("shield") || flag("trap_disabled")
+      damage = 1
       message = "O săgeată otrăvită te lovește din întuneric!"
-      on_trigger = set_flag("trap_disabled")
+      protection = shield
+      protection_message = "Scutul absoarbe lovitura săgeții!"
     }
   }
-
+  
   room "armory" {
-    description = "Sala cu arme. Pe perete: un cufăr încuiat."
+    description = "Sala cu arme. Pe perete: un cufăr încuiat. Ușa era blocată, dar ai reușit să intri."
     
-    objects = [
-      chest: {
-        requires = "silver_key"
-        contents = ["rusty_key", "sword"]
-        examine = "Un cufăr cu simbolul unei coroane"
-      }
+    objects = [chest]
+    
+    connections = [
+      east: "hallway"
     ]
   }
-
+  
   room "well_room" {
-    description = "O fântână cu apă neagră. Un zombi păzește ușa de nord!"
+    description = "O fântână cu apă neagră. Corzi învechite atârnă de tavan. Un zombi păzește ușa de nord!"
+    
+    # Condiție: trebuie să ai cheia ruginită pentru a intra
+    requires = rusty_key
+    entry_message = "Ușa este încuiată! Ai nevoie de o cheie."
+    
+    trap {
+      damage = 1
+      message = "Corzile putrede cad peste tine!"
+      protection = sword
+      protection_message = "Tai rapid corzile cu spada înainte să cadă!"
+    }
     
     enemy {
       name = "zombie"
       damage = 2
-      weakness = "sword"
-      defeat_reward = "gold_key"
+      weakness = sword
+      defeat_reward = gold_key
     }
     
     connections = [
-      north: "exit" if has_item("gold_key") && has_item("silver_key")
+      north: "exit",
+      west: "hallway"
     ]
   }
-
+  
   room "exit" {
     description = "AI DESCHIS UȘA BLOCATĂ CU CELE DOUĂ CHEI! LIBER!"
+    
+    # Condiție finală: trebuie să ai ambele chei pentru a ieși
+    requires = [rusty_key, gold_key]
+    entry_message = "Ușa de ieșire are două încuietori. Ai nevoie de ambele chei!"
+    
     win_condition = true
   }
 }
