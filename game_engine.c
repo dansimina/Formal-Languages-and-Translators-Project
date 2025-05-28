@@ -4,7 +4,16 @@
 #include <stdbool.h>
 #include <ctype.h>
 
-// Include structurile din parser
+#define MAX_OBJECTS 50
+#define MAX_ROOMS 20
+#define MAX_OBJECTS_PER_ROOM 10
+#define MAX_CONNECTIONS_PER_ROOM 8
+#define MAX_CONTENTS_PER_OBJECT 5
+#define MAX_REQUIREMENTS_PER_ROOM 5
+#define MAX_INVENTORY_SIZE 20
+#define MAX_NAME_LENGTH 64
+#define MAX_DESCRIPTION_LENGTH 512
+
 typedef struct Object Object;
 typedef struct Room Room;
 
@@ -12,13 +21,13 @@ typedef struct Object {
     char* name;
     bool takeable;
     Object* requires;
-    Object** contents;
+    Object* contents[MAX_CONTENTS_PER_OBJECT];
     int content_count;
     Object* hidden_item;
     char* examine_text;
     bool consume_key;
-    bool hidden_revealed; // New field to track if hidden item was revealed
-    bool opened; // New field to track if container was opened
+    bool hidden_revealed;
+    bool opened;
 } Object;
 
 typedef struct {
@@ -43,11 +52,11 @@ typedef struct {
 typedef struct Room {
     char* name;
     char* description;
-    Connection* connections;
+    Connection connections[MAX_CONNECTIONS_PER_ROOM];
     int connection_count;
-    Object** objects;
+    Object* objects[MAX_OBJECTS_PER_ROOM];
     int object_count;
-    Object** requires;
+    Object* requires[MAX_REQUIREMENTS_PER_ROOM];
     int requires_count;
     char* entry_message;
     bool has_trap;
@@ -61,16 +70,16 @@ typedef struct {
     char* game_name;
     Room* start_room;
     int health;
-    Object* objects;
+    Object objects[MAX_OBJECTS];
     int object_count;
-    Room* rooms;
+    Room rooms[MAX_ROOMS];
     int room_count;
 } Game;
 
 // Player state
 typedef struct {
     Room* current_room;
-    Object** inventory;
+    Object* inventory[MAX_INVENTORY_SIZE];
     int inventory_count;
     int max_health;
     int current_health;
@@ -80,30 +89,8 @@ typedef struct {
 
 extern Game game_data;
 
-void init_player(Player* player);
-void print_room(Room* room);
-void print_inventory(Player* player);
-void print_help();
-bool has_object_in_inventory(Player* player, Object* obj);
-bool can_enter_room(Player* player, Room* room);
-void check_room_requirements(Player* player, Room* room);
-void show_room_requirements(Player* player, Room* room, bool trying_to_enter);
-void add_to_inventory(Player* player, Object* obj);
-void remove_from_inventory(Player* player, Object* obj);
-Object* find_object_in_room(Room* room, char* name);
-Object* find_object_in_inventory(Player* player, char* name);
-Room* find_connected_room(Room* current, char* direction);
-void handle_trap(Player* player, Room* room);
-void handle_enemy(Player* player, Room* room);
-void process_command(Player* player, char* input);
-void to_lowercase(char* str);
-void game_loop(Player* player);
-void reveal_hidden_item(Player* player, Object* obj);
-void add_object_to_room(Room* room, Object* obj);
-
 void init_player(Player* player) {
     player->current_room = game_data.start_room;
-    player->inventory = malloc(20 * sizeof(Object*)); // Max 20 objects
     player->inventory_count = 0;
     player->max_health = game_data.health;
     player->current_health = game_data.health;
@@ -117,17 +104,21 @@ void to_lowercase(char* str) {
     }
 }
 
-void add_object_to_room(Room* room, Object* obj) {
-    room->objects = realloc(room->objects, (room->object_count + 1) * sizeof(Object*));
-    if (room->objects) {
-        room->objects[room->object_count++] = obj;
+bool add_object_to_room(Room* room, Object* obj) {
+    if (room->object_count >= MAX_OBJECTS_PER_ROOM) {
+        printf("Error: Room '%s' is full (max %d objects)\n", room->name, MAX_OBJECTS_PER_ROOM);
+        return false;
     }
+    room->objects[room->object_count++] = obj;
+    return true;
 }
 
 void reveal_hidden_item(Player* player, Object* obj) {
     if (obj->hidden_item && !obj->hidden_revealed) {
         printf("You found a hidden %s!\n", obj->hidden_item->name);
-        add_object_to_room(player->current_room, obj->hidden_item);
+        if (!add_object_to_room(player->current_room, obj->hidden_item)) {
+            printf("The room is too full to place the %s!\n", obj->hidden_item->name);
+        }
         obj->hidden_revealed = true;
     }
 }
@@ -207,6 +198,7 @@ void print_help() {
     printf("  go <direction> - Move in a direction (north, south, east, west, etc.)\n");
     printf("  check <direction> - Check what's needed to enter a room\n");
     printf("  take <object> - Take an object\n");
+    printf("  drop <object> - Drop an object from your inventory\n");
     printf("  open <object> - Open a container (like a chest)\n");
     printf("  examine <object> - Examine an object closely\n");
     printf("  search <object> - Search an object for hidden items\n");
@@ -293,10 +285,13 @@ void check_room_requirements(Player* player, Room* room) {
     show_room_requirements(player, room, true);
 }
 
-void add_to_inventory(Player* player, Object* obj) {
-    if (player->inventory_count < 20) {
-        player->inventory[player->inventory_count++] = obj;
+bool add_to_inventory(Player* player, Object* obj) {
+    if (player->inventory_count >= MAX_INVENTORY_SIZE) {
+        printf("Your inventory is full (max %d items)!\n", MAX_INVENTORY_SIZE);
+        return false;
     }
+    player->inventory[player->inventory_count++] = obj;
+    return true;
 }
 
 void remove_from_inventory(Player* player, Object* obj) {
@@ -376,7 +371,10 @@ void handle_enemy(Player* player, Room* room) {
         // Give reward if any
         if (room->enemy.defeat_reward) {
             printf("You found %s!\n", room->enemy.defeat_reward->name);
-            add_to_inventory(player, room->enemy.defeat_reward);
+            if (!add_to_inventory(player, room->enemy.defeat_reward)) {
+                printf("Your inventory is full! %s falls to the ground.\n", room->enemy.defeat_reward->name);
+                add_object_to_room(player->current_room, room->enemy.defeat_reward);
+            }
         }
         
         // Remove enemy from room
@@ -509,7 +507,10 @@ void process_command(Player* player, char* input) {
                     if (i < obj->content_count - 1) printf(", ");
                     
                     // Add to room
-                    add_object_to_room(player->current_room, obj->contents[i]);
+                    if (!add_object_to_room(player->current_room, obj->contents[i])) {
+                        printf("\n(The room is too full for some items!)");
+                        break;
+                    }
                 }
             }
             printf("\n");
@@ -546,7 +547,12 @@ void process_command(Player* player, char* input) {
             return;
         }
         
-        // Remove from room and add to inventory
+        // Check if inventory is full
+        if (!add_to_inventory(player, obj)) {
+            return;
+        }
+        
+        // Remove from room
         for (int i = 0; i < player->current_room->object_count; i++) {
             if (player->current_room->objects[i] == obj) {
                 for (int j = i; j < player->current_room->object_count - 1; j++) {
@@ -557,7 +563,6 @@ void process_command(Player* player, char* input) {
             }
         }
         
-        add_to_inventory(player, obj);
         printf("You take %s.\n", obj->name);
         
         // Add contents to room if any
@@ -569,7 +574,10 @@ void process_command(Player* player, char* input) {
                     if (i < obj->content_count - 1) printf(", ");
                     
                     // Add to room
-                    add_object_to_room(player->current_room, obj->contents[i]);
+                    if (!add_object_to_room(player->current_room, obj->contents[i])) {
+                        printf("\n(The room is too full for some items!)");
+                        break;
+                    }
                 }
             }
             printf("\n");
@@ -577,6 +585,28 @@ void process_command(Player* player, char* input) {
         
         // Reveal hidden item if any
         reveal_hidden_item(player, obj);
+        
+    } else if (strcmp(command, "drop") == 0) {
+        if (strlen(argument) == 0) {
+            printf("Drop what? (Example: drop key)\n");
+            return;
+        }
+        
+        Object* obj = find_object_in_inventory(player, argument);
+        if (!obj) {
+            printf("You don't have %s in your inventory.\n", argument);
+            return;
+        }
+        
+        // Remove from inventory and add to current room
+        remove_from_inventory(player, obj);
+        if (!add_object_to_room(player->current_room, obj)) {
+            // If room is full, put it back in inventory
+            add_to_inventory(player, obj);
+            return;
+        }
+        
+        printf("You drop %s.\n", obj->name);
         
     } else if (strcmp(command, "examine") == 0 || strcmp(command, "ex") == 0) {
         if (strlen(argument) == 0) {
@@ -691,7 +721,10 @@ void process_command(Player* player, char* input) {
                                 if (i < target->content_count - 1) printf(", ");
                                 
                                 // Add to room
-                                add_object_to_room(player->current_room, target->contents[i]);
+                                if (!add_object_to_room(player->current_room, target->contents[i])) {
+                                    printf("\n(The room is too full for some items!)");
+                                    break;
+                                }
                             }
                         }
                         printf("\n");
@@ -786,9 +819,8 @@ int main() {
     
     if (player.game_won) {
         printf("\nYou completed the game successfully!\n");
-        return 0;
     } else {
         printf("\nGame ended.\n");
-        return 0;
     }
+	return 0;
 }

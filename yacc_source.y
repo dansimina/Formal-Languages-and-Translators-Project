@@ -4,49 +4,58 @@
     #include <stdbool.h>
     #include <stdlib.h>
 
-    // Forward declarations
+    // Constants for fixed array sizes
+    #define MAX_OBJECTS 50
+    #define MAX_ROOMS 20
+    #define MAX_OBJECTS_PER_ROOM 10
+    #define MAX_CONNECTIONS_PER_ROOM 8
+    #define MAX_CONTENTS_PER_OBJECT 5
+    #define MAX_REQUIREMENTS_PER_ROOM 5
+    #define MAX_INVENTORY_SIZE 20
+    #define MAX_NAME_LENGTH 64
+    #define MAX_DESCRIPTION_LENGTH 512
+
     typedef struct Object Object;
     typedef struct Room Room;
 
-    // Struct-uri cu referințe directe
     typedef struct Object {
         char* name;
         bool takeable;
-        Object* requires;               // pointer direct la obiect
-        Object** contents;              // array de pointeri la obiecte
+        Object* requires;
+        Object* contents[MAX_CONTENTS_PER_OBJECT];
         int content_count;
-        Object* hidden_item;            // pointer direct la obiect
+        Object* hidden_item;
         char* examine_text;
         bool consume_key;
     } Object;
 
     typedef struct {
         char* direction;
-        Room* room;                     // pointer direct la cameră
+        Room* room;
     } Connection;
 
     typedef struct {
         int damage;
         char* message;
-        Object* protection;             // pointer direct la obiect
+        Object* protection;
         char* protection_message;
     } Trap;
 
     typedef struct {
         char* name;
         int damage;
-        Object* weakness;               // pointer direct la obiect
-        Object* defeat_reward;          // pointer direct la obiect
+        Object* weakness;
+        Object* defeat_reward;
     } Enemy;
 
     typedef struct Room {
         char* name;
         char* description;
-        Connection* connections;
+        Connection connections[MAX_CONNECTIONS_PER_ROOM];
         int connection_count;
-        Object** objects;               // array de pointeri la obiecte
+        Object* objects[MAX_OBJECTS_PER_ROOM];
         int object_count;
-        Object** requires;              // array de pointeri la obiecte necesare
+        Object* requires[MAX_REQUIREMENTS_PER_ROOM];
         int requires_count;
         char* entry_message;
         bool has_trap;
@@ -58,20 +67,19 @@
 
     typedef struct {
         char* game_name;
-        Room* start_room;               // pointer direct la cameră
+        Room* start_room;
         int health;
-        Object* objects;
+        Object objects[MAX_OBJECTS];
         int object_count;
-        Room* rooms;
+        Room rooms[MAX_ROOMS];
         int room_count;
     } Game;
 
-    // Structuri temporare pentru parsing (cu nume ca string-uri)
     typedef struct {
         char* name;
         bool takeable;
         char* requires_name;
-        char** contents_names;
+        char* contents_names[MAX_CONTENTS_PER_OBJECT];
         int content_count;
         char* hidden_item_name;
         char* examine_text;
@@ -100,11 +108,11 @@
     typedef struct {
         char* name;
         char* description;
-        TempConnection* connections;
+        TempConnection connections[MAX_CONNECTIONS_PER_ROOM];
         int connection_count;
-        char** objects_names;
+        char* objects_names[MAX_OBJECTS_PER_ROOM];
         int object_count;
-        char** requires_names;
+        char* requires_names[MAX_REQUIREMENTS_PER_ROOM];
         int requires_count;
         char* entry_message;
         bool has_trap;
@@ -114,28 +122,24 @@
         bool win_condition;
     } TempRoom;
 
-    // Variabile globale
     Game game_data;
     TempObject temp_object;
     TempRoom temp_room;
     TempTrap temp_trap;
     TempEnemy temp_enemy;
     
-    // Arrays temporare pentru parsing
-    TempObject* temp_objects;
+    TempObject temp_objects[MAX_OBJECTS];
     int temp_object_count;
-    TempRoom* temp_rooms;
+    TempRoom temp_rooms[MAX_ROOMS];
     int temp_room_count;
     char* temp_start_room_name;
 
-    // Error tracking
     int parse_error_count = 0;
     bool parsing_failed = false;
 
-    // Funcții helper
     void init_game();
-    void add_temp_object(TempObject obj);
-    void add_temp_room(TempRoom room);
+    bool add_temp_object(TempObject obj);
+    bool add_temp_room(TempRoom room);
     void link_references();
     Object* find_object(char* name);
     Room* find_room(char* name);
@@ -143,7 +147,6 @@
     void reset_temp_object();
     void reset_temp_room();
     
-    // Error handling and validation functions
     bool object_name_exists(char* name);
     bool room_name_exists(char* name);
     void report_error(const char* message);
@@ -184,7 +187,6 @@ program: GAME STRING OPEN_BRACE {
         } configuration CLOSED_BRACE {
             if (!parsing_failed && validate_game_data()) {
                 link_references();
-                // Don't print game data here anymore
             } else {
                 printf("Parsing failed due to validation errors.\n");
                 YYERROR;
@@ -234,7 +236,9 @@ object_config: IDENTIFIER COLON OPEN_BRACE {
                 reset_temp_object();
                 temp_object.name = strdup($1);
             } object_props CLOSED_BRACE {
-                add_temp_object(temp_object);
+                if (!add_temp_object(temp_object)) {
+                    YYERROR;
+                }
             }
             ;
 
@@ -276,8 +280,13 @@ item_list: item_list COMMA IDENTIFIER {
                 report_error("Item name in contents list cannot be empty");
                 YYERROR;
             }
-            temp_object.contents_names = realloc(temp_object.contents_names, 
-                (temp_object.content_count + 1) * sizeof(char*));
+            if (temp_object.content_count >= MAX_CONTENTS_PER_OBJECT) {
+                char error_msg[256];
+                snprintf(error_msg, sizeof(error_msg), "Object '%s' has too many contents (max %d)", 
+                        temp_object.name, MAX_CONTENTS_PER_OBJECT);
+                report_error(error_msg);
+                YYERROR;
+            }
             temp_object.contents_names[temp_object.content_count++] = strdup($3);
         }
         | IDENTIFIER {
@@ -285,9 +294,14 @@ item_list: item_list COMMA IDENTIFIER {
                 report_error("Item name in contents list cannot be empty");
                 YYERROR;
             }
-            temp_object.contents_names = malloc(sizeof(char*));
-            temp_object.contents_names[0] = strdup($1);
-            temp_object.content_count = 1;
+            if (temp_object.content_count >= MAX_CONTENTS_PER_OBJECT) {
+                char error_msg[256];
+                snprintf(error_msg, sizeof(error_msg), "Object '%s' has too many contents (max %d)", 
+                        temp_object.name, MAX_CONTENTS_PER_OBJECT);
+                report_error(error_msg);
+                YYERROR;
+            }
+            temp_object.contents_names[temp_object.content_count++] = strdup($1);
         }
         |
         ;
@@ -311,7 +325,9 @@ room_definition: ROOM STRING OPEN_BRACE {
                 reset_temp_room();
                 temp_room.name = strdup($2);
             } room_content_list CLOSED_BRACE {
-                add_temp_room(temp_room);
+                if (!add_temp_room(temp_room)) {
+                    YYERROR;
+                }
             }
             ;
 
@@ -334,9 +350,14 @@ room_content: DESCRIPTION EQUALS STRING {
                     report_error("Required object name cannot be empty");
                     YYERROR;
                 }
-                temp_room.requires_names = malloc(sizeof(char*));
-                temp_room.requires_names[0] = strdup($3);
-                temp_room.requires_count = 1;
+                if (temp_room.requires_count >= MAX_REQUIREMENTS_PER_ROOM) {
+                    char error_msg[256];
+                    snprintf(error_msg, sizeof(error_msg), "Room '%s' has too many requirements (max %d)", 
+                            temp_room.name, MAX_REQUIREMENTS_PER_ROOM);
+                    report_error(error_msg);
+                    YYERROR;
+                }
+                temp_room.requires_names[temp_room.requires_count++] = strdup($3);
             }
             | REQUIRES EQUALS LIST_START req_list LIST_END
             | ENTRY_MESSAGE EQUALS STRING { 
@@ -356,8 +377,13 @@ object_list: object_list COMMA IDENTIFIER {
                 report_error("Object name in room cannot be empty");
                 YYERROR;
             }
-            temp_room.objects_names = realloc(temp_room.objects_names, 
-                (temp_room.object_count + 1) * sizeof(char*));
+            if (temp_room.object_count >= MAX_OBJECTS_PER_ROOM) {
+                char error_msg[256];
+                snprintf(error_msg, sizeof(error_msg), "Room '%s' has too many objects (max %d)", 
+                        temp_room.name, MAX_OBJECTS_PER_ROOM);
+                report_error(error_msg);
+                YYERROR;
+            }
             temp_room.objects_names[temp_room.object_count++] = strdup($3);
         }
         | IDENTIFIER {
@@ -365,9 +391,14 @@ object_list: object_list COMMA IDENTIFIER {
                 report_error("Object name in room cannot be empty");
                 YYERROR;
             }
-            temp_room.objects_names = malloc(sizeof(char*));
-            temp_room.objects_names[0] = strdup($1);
-            temp_room.object_count = 1;
+            if (temp_room.object_count >= MAX_OBJECTS_PER_ROOM) {
+                char error_msg[256];
+                snprintf(error_msg, sizeof(error_msg), "Room '%s' has too many objects (max %d)", 
+                        temp_room.name, MAX_OBJECTS_PER_ROOM);
+                report_error(error_msg);
+                YYERROR;
+            }
+            temp_room.objects_names[temp_room.object_count++] = strdup($1);
         }
         |
         ;
@@ -377,8 +408,13 @@ req_list: req_list COMMA IDENTIFIER {
                 report_error("Required object name cannot be empty");
                 YYERROR;
             }
-            temp_room.requires_names = realloc(temp_room.requires_names, 
-                (temp_room.requires_count + 1) * sizeof(char*));
+            if (temp_room.requires_count >= MAX_REQUIREMENTS_PER_ROOM) {
+                char error_msg[256];
+                snprintf(error_msg, sizeof(error_msg), "Room '%s' has too many requirements (max %d)", 
+                        temp_room.name, MAX_REQUIREMENTS_PER_ROOM);
+                report_error(error_msg);
+                YYERROR;
+            }
             temp_room.requires_names[temp_room.requires_count++] = strdup($3);
         }
         | IDENTIFIER {
@@ -386,9 +422,14 @@ req_list: req_list COMMA IDENTIFIER {
                 report_error("Required object name cannot be empty");
                 YYERROR;
             }
-            temp_room.requires_names = malloc(sizeof(char*));
-            temp_room.requires_names[0] = strdup($1);
-            temp_room.requires_count = 1;
+            if (temp_room.requires_count >= MAX_REQUIREMENTS_PER_ROOM) {
+                char error_msg[256];
+                snprintf(error_msg, sizeof(error_msg), "Room '%s' has too many requirements (max %d)", 
+                        temp_room.name, MAX_REQUIREMENTS_PER_ROOM);
+                report_error(error_msg);
+                YYERROR;
+            }
+            temp_room.requires_names[temp_room.requires_count++] = strdup($1);
         }
         ;
 
@@ -406,8 +447,13 @@ connection: IDENTIFIER COLON STRING {
                 report_error("Connected room name cannot be empty");
                 YYERROR;
             }
-            temp_room.connections = realloc(temp_room.connections, 
-                (temp_room.connection_count + 1) * sizeof(TempConnection));
+            if (temp_room.connection_count >= MAX_CONNECTIONS_PER_ROOM) {
+                char error_msg[256];
+                snprintf(error_msg, sizeof(error_msg), "Room '%s' has too many connections (max %d)", 
+                        temp_room.name, MAX_CONNECTIONS_PER_ROOM);
+                report_error(error_msg);
+                YYERROR;
+            }
             temp_room.connections[temp_room.connection_count].direction = strdup($1);
             temp_room.connections[temp_room.connection_count].room_name = strdup($3);
             temp_room.connection_count++;
@@ -644,8 +690,8 @@ bool validate_game_data() {
 
 void init_game() {
     memset(&game_data, 0, sizeof(Game));
-    temp_objects = NULL;
-    temp_rooms = NULL;
+    memset(temp_objects, 0, sizeof(temp_objects));
+    memset(temp_rooms, 0, sizeof(temp_rooms));
     temp_object_count = 0;
     temp_room_count = 0;
     parse_error_count = 0;
@@ -662,22 +708,26 @@ void reset_temp_room() {
     memset(&temp_enemy, 0, sizeof(TempEnemy));
 }
 
-void add_temp_object(TempObject obj) {
-    temp_objects = realloc(temp_objects, (temp_object_count + 1) * sizeof(TempObject));
-    if (!temp_objects) {
-        report_error("Memory allocation failed for objects");
-        return;
+bool add_temp_object(TempObject obj) {
+    if (temp_object_count >= MAX_OBJECTS) {
+        char error_msg[256];
+        snprintf(error_msg, sizeof(error_msg), "Too many objects defined (max %d)", MAX_OBJECTS);
+        report_error(error_msg);
+        return false;
     }
     temp_objects[temp_object_count++] = obj;
+    return true;
 }
 
-void add_temp_room(TempRoom room) {
-    temp_rooms = realloc(temp_rooms, (temp_room_count + 1) * sizeof(TempRoom));
-    if (!temp_rooms) {
-        report_error("Memory allocation failed for rooms");
-        return;
+bool add_temp_room(TempRoom room) {
+    if (temp_room_count >= MAX_ROOMS) {
+        char error_msg[256];
+        snprintf(error_msg, sizeof(error_msg), "Too many rooms defined (max %d)", MAX_ROOMS);
+        report_error(error_msg);
+        return false;
     }
     temp_rooms[temp_room_count++] = room;
+    return true;
 }
 
 Object* find_object(char* name) {
@@ -701,34 +751,22 @@ Room* find_room(char* name) {
 }
 
 void link_references() {
-    // Creează array-urile finale
-    game_data.objects = malloc(temp_object_count * sizeof(Object));
-    if (!game_data.objects && temp_object_count > 0) {
-        report_error("Memory allocation failed for final objects array");
-        return;
-    }
+    // Set final counts
     game_data.object_count = temp_object_count;
-    
-    game_data.rooms = malloc(temp_room_count * sizeof(Room));
-    if (!game_data.rooms && temp_room_count > 0) {
-        report_error("Memory allocation failed for final rooms array");
-        return;
-    }
     game_data.room_count = temp_room_count;
     
-    // Copiază obiectele (fără referințe încă)
+    // Copy objects (without references yet)
     for (int i = 0; i < temp_object_count; i++) {
         game_data.objects[i].name = temp_objects[i].name;
         game_data.objects[i].takeable = temp_objects[i].takeable;
         game_data.objects[i].examine_text = temp_objects[i].examine_text;
         game_data.objects[i].consume_key = temp_objects[i].consume_key;
-        game_data.objects[i].content_count = 0;  // Va fi setat mai jos
-        game_data.objects[i].contents = NULL;
+        game_data.objects[i].content_count = 0;  // Will be set below
         game_data.objects[i].requires = NULL;
         game_data.objects[i].hidden_item = NULL;
     }
     
-    // Copiază camerele (fără referințe încă)
+    // Copy rooms (without references yet)
     for (int i = 0; i < temp_room_count; i++) {
         game_data.rooms[i].name = temp_rooms[i].name;
         game_data.rooms[i].description = temp_rooms[i].description;
@@ -737,14 +775,11 @@ void link_references() {
         game_data.rooms[i].has_trap = temp_rooms[i].has_trap;
         game_data.rooms[i].has_enemy = temp_rooms[i].has_enemy;
         game_data.rooms[i].connection_count = 0;
-        game_data.rooms[i].connections = NULL;
         game_data.rooms[i].object_count = 0;
-        game_data.rooms[i].objects = NULL;
         game_data.rooms[i].requires_count = 0;
-        game_data.rooms[i].requires = NULL;
     }
     
-    // Acum leagă referințele pentru obiecte
+    // Now link references for objects
     for (int i = 0; i < temp_object_count; i++) {
         // Link requires
         game_data.objects[i].requires = find_object(temp_objects[i].requires_name);
@@ -753,59 +788,31 @@ void link_references() {
         game_data.objects[i].hidden_item = find_object(temp_objects[i].hidden_item_name);
         
         // Link contents
-        if (temp_objects[i].content_count > 0) {
-            game_data.objects[i].contents = malloc(temp_objects[i].content_count * sizeof(Object*));
-            if (!game_data.objects[i].contents) {
-                report_error("Memory allocation failed for object contents");
-                continue;
-            }
-            game_data.objects[i].content_count = temp_objects[i].content_count;
-            for (int j = 0; j < temp_objects[i].content_count; j++) {
-                game_data.objects[i].contents[j] = find_object(temp_objects[i].contents_names[j]);
-            }
+        game_data.objects[i].content_count = temp_objects[i].content_count;
+        for (int j = 0; j < temp_objects[i].content_count; j++) {
+            game_data.objects[i].contents[j] = find_object(temp_objects[i].contents_names[j]);
         }
     }
     
-    // Leagă referințele pentru camere
+    // Link references for rooms
     for (int i = 0; i < temp_room_count; i++) {
         // Link objects
-        if (temp_rooms[i].object_count > 0) {
-            game_data.rooms[i].objects = malloc(temp_rooms[i].object_count * sizeof(Object*));
-            if (!game_data.rooms[i].objects) {
-                report_error("Memory allocation failed for room objects");
-                continue;
-            }
-            game_data.rooms[i].object_count = temp_rooms[i].object_count;
-            for (int j = 0; j < temp_rooms[i].object_count; j++) {
-                game_data.rooms[i].objects[j] = find_object(temp_rooms[i].objects_names[j]);
-            }
+        game_data.rooms[i].object_count = temp_rooms[i].object_count;
+        for (int j = 0; j < temp_rooms[i].object_count; j++) {
+            game_data.rooms[i].objects[j] = find_object(temp_rooms[i].objects_names[j]);
         }
         
         // Link requires
-        if (temp_rooms[i].requires_count > 0) {
-            game_data.rooms[i].requires = malloc(temp_rooms[i].requires_count * sizeof(Object*));
-            if (!game_data.rooms[i].requires) {
-                report_error("Memory allocation failed for room requirements");
-                continue;
-            }
-            game_data.rooms[i].requires_count = temp_rooms[i].requires_count;
-            for (int j = 0; j < temp_rooms[i].requires_count; j++) {
-                game_data.rooms[i].requires[j] = find_object(temp_rooms[i].requires_names[j]);
-            }
+        game_data.rooms[i].requires_count = temp_rooms[i].requires_count;
+        for (int j = 0; j < temp_rooms[i].requires_count; j++) {
+            game_data.rooms[i].requires[j] = find_object(temp_rooms[i].requires_names[j]);
         }
         
         // Link connections
-        if (temp_rooms[i].connection_count > 0) {
-            game_data.rooms[i].connections = malloc(temp_rooms[i].connection_count * sizeof(Connection));
-            if (!game_data.rooms[i].connections) {
-                report_error("Memory allocation failed for room connections");
-                continue;
-            }
-            game_data.rooms[i].connection_count = temp_rooms[i].connection_count;
-            for (int j = 0; j < temp_rooms[i].connection_count; j++) {
-                game_data.rooms[i].connections[j].direction = temp_rooms[i].connections[j].direction;
-                game_data.rooms[i].connections[j].room = find_room(temp_rooms[i].connections[j].room_name);
-            }
+        game_data.rooms[i].connection_count = temp_rooms[i].connection_count;
+        for (int j = 0; j < temp_rooms[i].connection_count; j++) {
+            game_data.rooms[i].connections[j].direction = temp_rooms[i].connections[j].direction;
+            game_data.rooms[i].connections[j].room = find_room(temp_rooms[i].connections[j].room_name);
         }
         
         // Link trap protection
@@ -843,6 +850,7 @@ int parse_game_file() {
 
     if (result == 0 && !parsing_failed) {
         printf("Game configuration loaded successfully!\n");
+        printf("Loaded %d objects and %d rooms.\n", game_data.object_count, game_data.room_count);
         return 0;
     } else {
         printf("Failed to load game configuration!\n");
