@@ -2,7 +2,7 @@ game "The Cursed Vault" {
   start_room = "dungeon"
   health = 3
   
-  # VERIFICARE LOGICĂ JOCULUI:
+  # PASI JOC:
   # 1. Dungeon: iei shield + silver_key (din loose_brick)
   # 2. Armory (cu shield): deschizi chest cu silver_key → rusty_key + sword
   # 3. Well_room (cu rusty_key): învingi zombie cu sword → gold_key  
