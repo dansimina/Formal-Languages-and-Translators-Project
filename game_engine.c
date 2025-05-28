@@ -202,7 +202,6 @@ void print_help() {
     printf("  open <object> - Open a container (like a chest)\n");
     printf("  examine <object> - Examine an object closely\n");
     printf("  search <object> - Search an object for hidden items\n");
-    printf("  use <object> - Use/interact with an object\n");
     printf("  inventory - Show your inventory\n");
     printf("  health - Show your health\n");
     printf("  help - Show this help\n");
@@ -237,12 +236,10 @@ void show_room_requirements(Player* player, Room* room, bool trying_to_enter) {
         printf("You cannot enter this room. ");
     }
     
-    // Show entry message if available
     if (room->entry_message) {
         printf("%s\n", room->entry_message);
     }
     
-    // List required items
     printf("Required items: ");
     for (int i = 0; i < room->requires_count; i++) {
         if (room->requires[i]) {
@@ -268,7 +265,6 @@ void show_room_requirements(Player* player, Room* room, bool trying_to_enter) {
     }
     printf("\n");
     
-    // Show what's still needed
     printf("You still need: ");
     bool first_missing = true;
     for (int i = 0; i < room->requires_count; i++) {
@@ -377,7 +373,6 @@ void handle_enemy(Player* player, Room* room) {
             }
         }
         
-        // Remove enemy from room
         room->has_enemy = false;
     } else {
         // Take damage
@@ -471,13 +466,11 @@ void process_command(Player* player, char* input) {
             return;
         }
         
-        // Check if object can be opened (has contents)
         if (obj->content_count == 0) {
             printf("You can't open %s.\n", obj->name);
             return;
         }
         
-        // Check if already opened
         if (obj->opened) {
             printf("The %s is already open and empty.\n", obj->name);
             return;
@@ -489,7 +482,6 @@ void process_command(Player* player, char* input) {
             return;
         }
         
-        // Open the container
         printf("You open the %s.\n", obj->name);
         
         // Consume key if required
@@ -516,7 +508,6 @@ void process_command(Player* player, char* input) {
             printf("\n");
         }
         
-        // Mark as opened
         obj->opened = true;
         
     } else if (strcmp(command, "take") == 0 || strcmp(command, "get") == 0) {
@@ -601,7 +592,6 @@ void process_command(Player* player, char* input) {
         // Remove from inventory and add to current room
         remove_from_inventory(player, obj);
         if (!add_object_to_room(player->current_room, obj)) {
-            // If room is full, put it back in inventory
             add_to_inventory(player, obj);
             return;
         }
@@ -669,97 +659,6 @@ void process_command(Player* player, char* input) {
         } else {
             printf("You search the %s but find nothing hidden.\n", obj->name);
         }
-        
-    } else if (strcmp(command, "use") == 0) {
-        if (strlen(argument) == 0) {
-            printf("Use what? (Example: use brick)\n");
-            return;
-        }
-        
-        // Check if it's a "use X on Y" command
-        char* on_pos = strstr(argument, " on ");
-        if (on_pos) {
-            *on_pos = '\0'; // Split the string
-            char* item_name = argument;
-            char* target_name = on_pos + 4;
-            
-            Object* item = find_object_in_inventory(player, item_name);
-            Object* target = find_object_in_room(player->current_room, target_name);
-            
-            if (!item) {
-                printf("You don't have %s.\n", item_name);
-                return;
-            }
-            
-            if (!target) {
-                printf("There's no %s here.\n", target_name);
-                return;
-            }
-            
-            // Handle using key on container
-            if (target->content_count > 0 && target->requires == item) {
-                if (target->opened) {
-                    printf("The %s is already open.\n", target->name);
-                } else {
-                    printf("You use %s on %s.\n", item->name, target->name);
-                    
-                    // Open the container
-                    printf("You open the %s.\n", target->name);
-                    
-                    // Consume key if required
-                    if (target->consume_key) {
-                        printf("The %s is consumed in the process.\n", item->name);
-                        remove_from_inventory(player, item);
-                    }
-                    
-                    // Add contents to room
-                    if (target->content_count > 0) {
-                        printf("Inside the %s you find: ", target->name);
-                        for (int i = 0; i < target->content_count; i++) {
-                            if (target->contents[i]) {
-                                printf("%s", target->contents[i]->name);
-                                if (i < target->content_count - 1) printf(", ");
-                                
-                                // Add to room
-                                if (!add_object_to_room(player->current_room, target->contents[i])) {
-                                    printf("\n(The room is too full for some items!)");
-                                    break;
-                                }
-                            }
-                        }
-                        printf("\n");
-                    }
-                    
-                    // Mark as opened
-                    target->opened = true;
-                }
-                return;
-            } else {
-                printf("You can't use %s on %s.\n", item->name, target->name);
-                return;
-            }
-        }
-        
-        Object* obj = find_object_in_room(player->current_room, argument);
-        if (!obj) {
-            obj = find_object_in_inventory(player, argument);
-        }
-        
-        if (!obj) {
-            printf("There's no %s here.\n", argument);
-            return;
-        }
-        
-        // For objects with hidden items, using them reveals the item
-        if (obj->hidden_item && !obj->hidden_revealed) {
-            printf("You interact with the %s.\n", obj->name);
-            reveal_hidden_item(player, obj);
-        } else if (obj->hidden_revealed) {
-            printf("You already used the %s.\n", obj->name);
-        } else {
-            printf("You can't use the %s in any meaningful way.\n", obj->name);
-        }
-        
     } else if (strcmp(command, "inventory") == 0 || strcmp(command, "i") == 0) {
         print_inventory(player);
         
@@ -791,7 +690,6 @@ void game_loop(Player* player) {
             break;
         }
         
-        // Remove newline
         input[strcspn(input, "\n")] = 0;
         
         if (strlen(input) == 0) continue;
@@ -800,13 +698,11 @@ void game_loop(Player* player) {
     }
 }
 
-// Declare external parse function
 int parse_game_file();
 
 int main() {
     printf("Loading game configuration...\n");
     
-    // Parse the game file
     if (parse_game_file() != 0) {
         printf("Failed to load game configuration!\n");
         return 1;

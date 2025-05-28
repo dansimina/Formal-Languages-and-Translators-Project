@@ -74,7 +74,6 @@
     #include <stdbool.h>
     #include <stdlib.h>
 
-    // Constants for fixed array sizes
     #define MAX_OBJECTS 50
     #define MAX_ROOMS 20
     #define MAX_OBJECTS_PER_ROOM 10
@@ -227,7 +226,7 @@
     extern FILE* yyin;
     extern int yylineno;
 
-#line 231 "y.tab.c"
+#line 230 "y.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -356,12 +355,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 161 "yacc_source.y"
+#line 160 "yacc_source.y"
 
     char* str;
     int number;
 
-#line 365 "y.tab.c"
+#line 364 "y.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -837,13 +836,13 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   180,   180,   180,   197,   200,   209,   218,   221,   222,
-     225,   225,   245,   246,   247,   250,   251,   252,   259,   260,
-     267,   274,   275,   278,   292,   306,   309,   310,   311,   314,
-     314,   334,   335,   336,   339,   346,   347,   348,   362,   363,
-     370,   371,   372,   375,   389,   403,   406,   420,   436,   437,
-     438,   441,   463,   469,   470,   471,   474,   481,   488,   495,
-     504,   510,   511,   512,   515,   522,   529,   536
+       0,   179,   179,   179,   196,   199,   208,   217,   220,   221,
+     224,   224,   244,   245,   246,   249,   250,   251,   258,   259,
+     266,   273,   274,   277,   291,   305,   308,   309,   310,   313,
+     313,   333,   334,   335,   338,   345,   346,   347,   361,   362,
+     369,   370,   371,   374,   388,   402,   405,   419,   435,   436,
+     437,   440,   462,   468,   469,   470,   473,   480,   487,   494,
+     503,   509,   510,   511,   514,   521,   528,   535
 };
 #endif
 
@@ -1497,7 +1496,7 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* $@1: %empty  */
-#line 180 "yacc_source.y"
+#line 179 "yacc_source.y"
                                 { 
             init_game(); 
             if ((yyvsp[-1].str) == NULL || strlen((yyvsp[-1].str)) == 0) {
@@ -1506,11 +1505,11 @@ yyreduce:
             }
             game_data.game_name = strdup((yyvsp[-1].str)); 
         }
-#line 1510 "y.tab.c"
+#line 1509 "y.tab.c"
     break;
 
   case 3: /* program: GAME STRING OPEN_BRACE $@1 configuration CLOSED_BRACE  */
-#line 187 "yacc_source.y"
+#line 186 "yacc_source.y"
                                      {
             if (!parsing_failed && validate_game_data()) {
                 link_references();
@@ -1519,11 +1518,11 @@ yyreduce:
                 YYERROR;
             }
         }
-#line 1523 "y.tab.c"
+#line 1522 "y.tab.c"
     break;
 
   case 5: /* start_room: START_ROOM EQUALS STRING  */
-#line 200 "yacc_source.y"
+#line 199 "yacc_source.y"
                                      { 
             if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
                 report_error("Start room name cannot be empty");
@@ -1531,11 +1530,11 @@ yyreduce:
             }
             temp_start_room_name = strdup((yyvsp[0].str)); 
         }
-#line 1535 "y.tab.c"
+#line 1534 "y.tab.c"
     break;
 
   case 6: /* health: HEALTH EQUALS NUMBER  */
-#line 209 "yacc_source.y"
+#line 208 "yacc_source.y"
                              { 
             if ((yyvsp[0].number) <= 0) {
                 report_error("Health must be a positive number");
@@ -1543,11 +1542,11 @@ yyreduce:
             }
             game_data.health = (yyvsp[0].number); 
         }
-#line 1547 "y.tab.c"
+#line 1546 "y.tab.c"
     break;
 
   case 10: /* $@2: %empty  */
-#line 225 "yacc_source.y"
+#line 224 "yacc_source.y"
                                            {
                 if ((yyvsp[-2].str) == NULL || strlen((yyvsp[-2].str)) == 0) {
                     report_error("Object name cannot be empty");
@@ -1562,33 +1561,33 @@ yyreduce:
                 reset_temp_object();
                 temp_object.name = strdup((yyvsp[-2].str));
             }
-#line 1566 "y.tab.c"
+#line 1565 "y.tab.c"
     break;
 
   case 11: /* object_config: IDENTIFIER COLON OPEN_BRACE $@2 object_props CLOSED_BRACE  */
-#line 238 "yacc_source.y"
+#line 237 "yacc_source.y"
                                         {
                 if (!add_temp_object(temp_object)) {
                     YYERROR;
                 }
             }
-#line 1576 "y.tab.c"
+#line 1575 "y.tab.c"
     break;
 
   case 15: /* object_prop: TAKEABLE EQUALS TRUE  */
-#line 250 "yacc_source.y"
+#line 249 "yacc_source.y"
                                   { temp_object.takeable = true; }
-#line 1582 "y.tab.c"
+#line 1581 "y.tab.c"
     break;
 
   case 16: /* object_prop: TAKEABLE EQUALS FALSE  */
-#line 251 "yacc_source.y"
+#line 250 "yacc_source.y"
                                     { temp_object.takeable = false; }
-#line 1588 "y.tab.c"
+#line 1587 "y.tab.c"
     break;
 
   case 17: /* object_prop: REQUIRES EQUALS IDENTIFIER  */
-#line 252 "yacc_source.y"
+#line 251 "yacc_source.y"
                                          { 
                 if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
                     report_error("Required object name cannot be empty");
@@ -1596,11 +1595,11 @@ yyreduce:
                 }
                 temp_object.requires_name = strdup((yyvsp[0].str)); 
             }
-#line 1600 "y.tab.c"
+#line 1599 "y.tab.c"
     break;
 
   case 19: /* object_prop: HIDDEN_ITEM EQUALS IDENTIFIER  */
-#line 260 "yacc_source.y"
+#line 259 "yacc_source.y"
                                             { 
                 if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
                     report_error("Hidden item name cannot be empty");
@@ -1608,11 +1607,11 @@ yyreduce:
                 }
                 temp_object.hidden_item_name = strdup((yyvsp[0].str)); 
             }
-#line 1612 "y.tab.c"
+#line 1611 "y.tab.c"
     break;
 
   case 20: /* object_prop: EXAMINE EQUALS STRING  */
-#line 267 "yacc_source.y"
+#line 266 "yacc_source.y"
                                     { 
                 if ((yyvsp[0].str) == NULL) {
                     report_error("Examine text cannot be null");
@@ -1620,23 +1619,23 @@ yyreduce:
                 }
                 temp_object.examine_text = strdup((yyvsp[0].str)); 
             }
-#line 1624 "y.tab.c"
+#line 1623 "y.tab.c"
     break;
 
   case 21: /* object_prop: CONSUME_KEY EQUALS TRUE  */
-#line 274 "yacc_source.y"
+#line 273 "yacc_source.y"
                                       { temp_object.consume_key = true; }
-#line 1630 "y.tab.c"
+#line 1629 "y.tab.c"
     break;
 
   case 22: /* object_prop: CONSUME_KEY EQUALS FALSE  */
-#line 275 "yacc_source.y"
+#line 274 "yacc_source.y"
                                        { temp_object.consume_key = false; }
-#line 1636 "y.tab.c"
+#line 1635 "y.tab.c"
     break;
 
   case 23: /* item_list: item_list COMMA IDENTIFIER  */
-#line 278 "yacc_source.y"
+#line 277 "yacc_source.y"
                                       {
             if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
                 report_error("Item name in contents list cannot be empty");
@@ -1651,11 +1650,11 @@ yyreduce:
             }
             temp_object.contents_names[temp_object.content_count++] = strdup((yyvsp[0].str));
         }
-#line 1655 "y.tab.c"
+#line 1654 "y.tab.c"
     break;
 
   case 24: /* item_list: IDENTIFIER  */
-#line 292 "yacc_source.y"
+#line 291 "yacc_source.y"
                      {
             if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
                 report_error("Item name in contents list cannot be empty");
@@ -1670,11 +1669,11 @@ yyreduce:
             }
             temp_object.contents_names[temp_object.content_count++] = strdup((yyvsp[0].str));
         }
-#line 1674 "y.tab.c"
+#line 1673 "y.tab.c"
     break;
 
   case 29: /* $@3: %empty  */
-#line 314 "yacc_source.y"
+#line 313 "yacc_source.y"
                                         {
                 if ((yyvsp[-1].str) == NULL || strlen((yyvsp[-1].str)) == 0) {
                     report_error("Room name cannot be empty");
@@ -1689,21 +1688,21 @@ yyreduce:
                 reset_temp_room();
                 temp_room.name = strdup((yyvsp[-1].str));
             }
-#line 1693 "y.tab.c"
+#line 1692 "y.tab.c"
     break;
 
   case 30: /* room_definition: ROOM STRING OPEN_BRACE $@3 room_content_list CLOSED_BRACE  */
-#line 327 "yacc_source.y"
+#line 326 "yacc_source.y"
                                              {
                 if (!add_temp_room(temp_room)) {
                     YYERROR;
                 }
             }
-#line 1703 "y.tab.c"
+#line 1702 "y.tab.c"
     break;
 
   case 34: /* room_content: DESCRIPTION EQUALS STRING  */
-#line 339 "yacc_source.y"
+#line 338 "yacc_source.y"
                                         { 
                 if ((yyvsp[0].str) == NULL) {
                     report_error("Room description cannot be null");
@@ -1711,11 +1710,11 @@ yyreduce:
                 }
                 temp_room.description = strdup((yyvsp[0].str)); 
             }
-#line 1715 "y.tab.c"
+#line 1714 "y.tab.c"
     break;
 
   case 37: /* room_content: REQUIRES EQUALS IDENTIFIER  */
-#line 348 "yacc_source.y"
+#line 347 "yacc_source.y"
                                          { 
                 if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
                     report_error("Required object name cannot be empty");
@@ -1730,11 +1729,11 @@ yyreduce:
                 }
                 temp_room.requires_names[temp_room.requires_count++] = strdup((yyvsp[0].str));
             }
-#line 1734 "y.tab.c"
+#line 1733 "y.tab.c"
     break;
 
   case 39: /* room_content: ENTRY_MESSAGE EQUALS STRING  */
-#line 363 "yacc_source.y"
+#line 362 "yacc_source.y"
                                           { 
                 if ((yyvsp[0].str) == NULL) {
                     report_error("Entry message cannot be null");
@@ -1742,17 +1741,17 @@ yyreduce:
                 }
                 temp_room.entry_message = strdup((yyvsp[0].str)); 
             }
-#line 1746 "y.tab.c"
+#line 1745 "y.tab.c"
     break;
 
   case 42: /* room_content: WIN_CONDITION EQUALS TRUE  */
-#line 372 "yacc_source.y"
+#line 371 "yacc_source.y"
                                         { temp_room.win_condition = true; }
-#line 1752 "y.tab.c"
+#line 1751 "y.tab.c"
     break;
 
   case 43: /* object_list: object_list COMMA IDENTIFIER  */
-#line 375 "yacc_source.y"
+#line 374 "yacc_source.y"
                                           {
             if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
                 report_error("Object name in room cannot be empty");
@@ -1767,11 +1766,11 @@ yyreduce:
             }
             temp_room.objects_names[temp_room.object_count++] = strdup((yyvsp[0].str));
         }
-#line 1771 "y.tab.c"
+#line 1770 "y.tab.c"
     break;
 
   case 44: /* object_list: IDENTIFIER  */
-#line 389 "yacc_source.y"
+#line 388 "yacc_source.y"
                      {
             if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
                 report_error("Object name in room cannot be empty");
@@ -1786,11 +1785,11 @@ yyreduce:
             }
             temp_room.objects_names[temp_room.object_count++] = strdup((yyvsp[0].str));
         }
-#line 1790 "y.tab.c"
+#line 1789 "y.tab.c"
     break;
 
   case 46: /* req_list: req_list COMMA IDENTIFIER  */
-#line 406 "yacc_source.y"
+#line 405 "yacc_source.y"
                                     {
             if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
                 report_error("Required object name cannot be empty");
@@ -1805,11 +1804,11 @@ yyreduce:
             }
             temp_room.requires_names[temp_room.requires_count++] = strdup((yyvsp[0].str));
         }
-#line 1809 "y.tab.c"
+#line 1808 "y.tab.c"
     break;
 
   case 47: /* req_list: IDENTIFIER  */
-#line 420 "yacc_source.y"
+#line 419 "yacc_source.y"
                      {
             if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
                 report_error("Required object name cannot be empty");
@@ -1824,11 +1823,11 @@ yyreduce:
             }
             temp_room.requires_names[temp_room.requires_count++] = strdup((yyvsp[0].str));
         }
-#line 1828 "y.tab.c"
+#line 1827 "y.tab.c"
     break;
 
   case 51: /* connection: IDENTIFIER COLON STRING  */
-#line 441 "yacc_source.y"
+#line 440 "yacc_source.y"
                                     {
             if ((yyvsp[-2].str) == NULL || strlen((yyvsp[-2].str)) == 0) {
                 report_error("Connection direction cannot be empty");
@@ -1849,20 +1848,20 @@ yyreduce:
             temp_room.connections[temp_room.connection_count].room_name = strdup((yyvsp[0].str));
             temp_room.connection_count++;
         }
-#line 1853 "y.tab.c"
+#line 1852 "y.tab.c"
     break;
 
   case 52: /* trap_definition: TRAP OPEN_BRACE trap_props CLOSED_BRACE  */
-#line 463 "yacc_source.y"
+#line 462 "yacc_source.y"
                                                          {
                 temp_room.has_trap = true;
                 temp_room.trap = temp_trap;
             }
-#line 1862 "y.tab.c"
+#line 1861 "y.tab.c"
     break;
 
   case 56: /* trap_prop: DAMAGE EQUALS NUMBER  */
-#line 474 "yacc_source.y"
+#line 473 "yacc_source.y"
                                 { 
                 if ((yyvsp[0].number) < 0) {
                     report_error("Trap damage cannot be negative");
@@ -1870,11 +1869,11 @@ yyreduce:
                 }
                 temp_trap.damage = (yyvsp[0].number); 
             }
-#line 1874 "y.tab.c"
+#line 1873 "y.tab.c"
     break;
 
   case 57: /* trap_prop: MESSAGE EQUALS STRING  */
-#line 481 "yacc_source.y"
+#line 480 "yacc_source.y"
                                     { 
                 if ((yyvsp[0].str) == NULL) {
                     report_error("Trap message cannot be null");
@@ -1882,11 +1881,11 @@ yyreduce:
                 }
                 temp_trap.message = strdup((yyvsp[0].str)); 
             }
-#line 1886 "y.tab.c"
+#line 1885 "y.tab.c"
     break;
 
   case 58: /* trap_prop: PROTECTION EQUALS IDENTIFIER  */
-#line 488 "yacc_source.y"
+#line 487 "yacc_source.y"
                                            { 
                 if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
                     report_error("Protection object name cannot be empty");
@@ -1894,11 +1893,11 @@ yyreduce:
                 }
                 temp_trap.protection_name = strdup((yyvsp[0].str)); 
             }
-#line 1898 "y.tab.c"
+#line 1897 "y.tab.c"
     break;
 
   case 59: /* trap_prop: PROTECTION_MESSAGE EQUALS STRING  */
-#line 495 "yacc_source.y"
+#line 494 "yacc_source.y"
                                                { 
                 if ((yyvsp[0].str) == NULL) {
                     report_error("Protection message cannot be null");
@@ -1906,20 +1905,20 @@ yyreduce:
                 }
                 temp_trap.protection_message = strdup((yyvsp[0].str)); 
             }
-#line 1910 "y.tab.c"
+#line 1909 "y.tab.c"
     break;
 
   case 60: /* enemy_definition: ENEMY OPEN_BRACE enemy_props CLOSED_BRACE  */
-#line 504 "yacc_source.y"
+#line 503 "yacc_source.y"
                                                             {
                 temp_room.has_enemy = true;
                 temp_room.enemy = temp_enemy;
             }
-#line 1919 "y.tab.c"
+#line 1918 "y.tab.c"
     break;
 
   case 64: /* enemy_prop: NAME EQUALS STRING  */
-#line 515 "yacc_source.y"
+#line 514 "yacc_source.y"
                                { 
                 if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
                     report_error("Enemy name cannot be empty");
@@ -1927,11 +1926,11 @@ yyreduce:
                 }
                 temp_enemy.name = strdup((yyvsp[0].str)); 
             }
-#line 1931 "y.tab.c"
+#line 1930 "y.tab.c"
     break;
 
   case 65: /* enemy_prop: DAMAGE EQUALS NUMBER  */
-#line 522 "yacc_source.y"
+#line 521 "yacc_source.y"
                                    { 
                 if ((yyvsp[0].number) < 0) {
                     report_error("Enemy damage cannot be negative");
@@ -1939,11 +1938,11 @@ yyreduce:
                 }
                 temp_enemy.damage = (yyvsp[0].number); 
             }
-#line 1943 "y.tab.c"
+#line 1942 "y.tab.c"
     break;
 
   case 66: /* enemy_prop: WEAKNESS EQUALS IDENTIFIER  */
-#line 529 "yacc_source.y"
+#line 528 "yacc_source.y"
                                          { 
                 if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
                     report_error("Enemy weakness object name cannot be empty");
@@ -1951,11 +1950,11 @@ yyreduce:
                 }
                 temp_enemy.weakness_name = strdup((yyvsp[0].str)); 
             }
-#line 1955 "y.tab.c"
+#line 1954 "y.tab.c"
     break;
 
   case 67: /* enemy_prop: DEFEAT_REWARD EQUALS IDENTIFIER  */
-#line 536 "yacc_source.y"
+#line 535 "yacc_source.y"
                                               { 
                 if ((yyvsp[0].str) == NULL || strlen((yyvsp[0].str)) == 0) {
                     report_error("Enemy defeat reward object name cannot be empty");
@@ -1963,11 +1962,11 @@ yyreduce:
                 }
                 temp_enemy.defeat_reward_name = strdup((yyvsp[0].str)); 
             }
-#line 1967 "y.tab.c"
+#line 1966 "y.tab.c"
     break;
 
 
-#line 1971 "y.tab.c"
+#line 1970 "y.tab.c"
 
       default: break;
     }
@@ -2160,7 +2159,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 545 "yacc_source.y"
+#line 544 "yacc_source.y"
 
 
 void report_error(const char* message) {
@@ -2370,22 +2369,21 @@ Room* find_room(char* name) {
 }
 
 void link_references() {
-    // Set final counts
     game_data.object_count = temp_object_count;
     game_data.room_count = temp_room_count;
     
-    // Copy objects (without references yet)
+    // Copy objects
     for (int i = 0; i < temp_object_count; i++) {
         game_data.objects[i].name = temp_objects[i].name;
         game_data.objects[i].takeable = temp_objects[i].takeable;
         game_data.objects[i].examine_text = temp_objects[i].examine_text;
         game_data.objects[i].consume_key = temp_objects[i].consume_key;
-        game_data.objects[i].content_count = 0;  // Will be set below
+        game_data.objects[i].content_count = 0;
         game_data.objects[i].requires = NULL;
         game_data.objects[i].hidden_item = NULL;
     }
     
-    // Copy rooms (without references yet)
+    // Copy rooms
     for (int i = 0; i < temp_room_count; i++) {
         game_data.rooms[i].name = temp_rooms[i].name;
         game_data.rooms[i].description = temp_rooms[i].description;

@@ -4,7 +4,6 @@
     #include <stdbool.h>
     #include <stdlib.h>
 
-    // Constants for fixed array sizes
     #define MAX_OBJECTS 50
     #define MAX_ROOMS 20
     #define MAX_OBJECTS_PER_ROOM 10
@@ -751,22 +750,21 @@ Room* find_room(char* name) {
 }
 
 void link_references() {
-    // Set final counts
     game_data.object_count = temp_object_count;
     game_data.room_count = temp_room_count;
     
-    // Copy objects (without references yet)
+    // Copy objects
     for (int i = 0; i < temp_object_count; i++) {
         game_data.objects[i].name = temp_objects[i].name;
         game_data.objects[i].takeable = temp_objects[i].takeable;
         game_data.objects[i].examine_text = temp_objects[i].examine_text;
         game_data.objects[i].consume_key = temp_objects[i].consume_key;
-        game_data.objects[i].content_count = 0;  // Will be set below
+        game_data.objects[i].content_count = 0;
         game_data.objects[i].requires = NULL;
         game_data.objects[i].hidden_item = NULL;
     }
     
-    // Copy rooms (without references yet)
+    // Copy rooms
     for (int i = 0; i < temp_room_count; i++) {
         game_data.rooms[i].name = temp_rooms[i].name;
         game_data.rooms[i].description = temp_rooms[i].description;

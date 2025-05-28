@@ -16,7 +16,7 @@ YACC_HEADER = y.tab.h
 OBJECTS = $(LEX_OUTPUT:.c=.o) $(YACC_OUTPUT:.c=.o) $(ENGINE_SOURCE:.c=.o)
 
 # Executable
-TARGET = adventure_game
+TARGET = minigame
 
 .PHONY: all clean
 
